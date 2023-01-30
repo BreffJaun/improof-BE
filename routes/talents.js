@@ -21,7 +21,7 @@ import {
 } from '../controller/usersController.js';
 
 import { auth } from '../middleware/auth.js';
-import { admin } from '../middleware/admin.js';
+// import { admin } from '../middleware/admin.js';
 
 // ========================
 
@@ -33,7 +33,7 @@ const router = express.Router();
 
 router
   .route('/')
-    .get(auth, admin, usersGetAll)
+    .get(auth, usersGetAll)
     .post(upload.single('avatar'), userValidator, validateRequest, usersPostUser);
 
 router

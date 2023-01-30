@@ -7,7 +7,7 @@ import morgan from 'morgan';
 import cookieParser from "cookie-parser";
 
 // I M P O R T:  R O U T E S
-import usersRouter from './routes/users.js';
+import talentsRouter from './routes/talents.js';
 import wrongRoutes from './routes/wrongPath.js';
 
 // I M P O R T:  E R R O R  H A N D L E R
@@ -37,18 +37,18 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser())
 app.use(cors(
-  // {
-  //   origin: 'http://localhost:3000', // fill in here render address
+  {
+    origin: 'http://localhost:3000', // fill in here render address
   // if you want to add more adresses in cors, make an array with single strings.
-  //   credentials: true
-  // }
+    credentials: true
+  }
   )
 );
 app.use(morgan("dev"));
 
 // ROUTER MIDDLEWARE
 // USERS
-app.use('/users', usersRouter);
+app.use('/talents', talentsRouter);
 
 
 // ERROR HANDLER

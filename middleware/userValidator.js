@@ -3,24 +3,24 @@ import {body} from 'express-validator';
 
 // C R E A T E   V A L I D A T O R
 export const userValidator = [
-  body("firstName")
+  body("profile.firstName")
     .notEmpty()
     .withMessage("Firstname has to bet set!")
     .isAlpha("de-DE", {ignore: " -"})
     .withMessage("Firstname contains not allowed signs!")
     .trim() // takes out whitespaces at the beginning and the end of an string
     .escape(), // changes special chars into normal chars
-  body("lastName")
+  body("profile.lastName")
     .trim()
     .isLength({max:20})
     .escape(),
-  body("email")
+  body("profile.email")
     .notEmpty()
     .withMessage("Email has to be set!")
     .trim()
     .isEmail()
     .normalizeEmail(),
-  body("password")
+  body("profile.password")
     .notEmpty()
     .withMessage("Password has to bet set!")
     .trim()

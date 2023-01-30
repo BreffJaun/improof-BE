@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import sgMail from '@sendgrid/mail';
 
 // I M P O R T:  F U N C T I O N S
-import UserModel from '../models/userModel.js';
+import TalentModel from '../models/talentModel.js';
 
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y 
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue"
@@ -13,47 +13,48 @@ const SENDGRID_KEY = process.env.SENDGRID_API_KEY
 
 //========================
 
-// GET List of all users
+// GET List of all talents
 export async function usersGetAll (req, res, next) {
   try {
-    res.json(await UserModel.find());
+    res.json(await TalentModel.find());
   }catch (err) {
     next(err);
   }
 }
 
-// POST (Add) a new User
+// POST (Add) a new Talent
 export async function usersPostUser (req, res, next) {
   try {
     const newUser = req.body;
-    // in the UserModel we check if the given email-address is unique
+    // in the TalentModel we check if the given email-address is unique
     const hashedPassword = await bcrypt.hash(newUser.password, 10);
-    const createdUser = await UserModel.create({...newUser, password: hashedPassword})     
+    const createdUser = await TalentModel.create({...newUser, password: hashedPassword})     
 
     // AVATAR IMPLEMENT BEGIN //
     if (req.file) {
-      await UserModel.findByIdAndUpdate(createdUser._id, {avatar: `http://localhost:2404/${req.file.path}`})
+      await TalentModel.findByIdAndUpdate(createdUser._id, {avatar: `http://localhost:2404/${req.file.path}`})
     }
     // AVATAR IMPLEMENT END //
 
     // VERIFY EMAIL IMPLEMENT BEGIN //
-    sgMail.setApiKey(SENDGRID_KEY)
-    const verifyToken = jwt.sign(
-      {email: newUser.email, _id: createdUser._id}, 
-      JWT_KEY,
-      {expiresIn: '1h'}
-      )
-    const msg = {
-      to: newUser.email, // Change to your recipient
-      from: `${"fillIn@your.mail"}`, // Change to your verified sender
-      subject: 'EMAIL VERIFICATION for the Record-Shop',
-      text: `To verify your email, please click on this link: http://localhost:2404/users/verify/${verifyToken}`,
-      html: `<p><a href="http://localhost:2404/users/verify/${verifyToken}">Verify your email!</a></p>`,
-    }
-    const response = await sgMail.send(msg);
+    // sgMail.setApiKey(SENDGRID_KEY)
+    // const verifyToken = jwt.sign(
+    //   {email: newUser.email, _id: createdUser._id}, 
+    //   JWT_KEY,
+    //   {expiresIn: '1h'}
+    //   )
+    // const msg = {
+    //   to: newUser.email, // Change to your recipient
+    //   from: `${"fillIn@your.mail"}`, // Change to your verified sender
+    //   subject: 'EMAIL VERIFICATION for the Record-Shop',
+    //   text: `To verify your email, please click on this link: http://localhost:2404/users/verify/${verifyToken}`,
+    //   html: `<p><a href="http://localhost:2404/users/verify/${verifyToken}">Verify your email!</a></p>`,
+    // }
+    // const response = await sgMail.send(msg);
     // VERIFY EMAIL IMPLEMENT END //
 
-    res.status(201).json({message: "Please verify your account via the link in the email we send you, to use your Profile."})
+    // res.status(201).json({message: "Please verify your account via the link in the email we send you, to use your Profile."})
+    res.status(201).json(createdUser)
   }catch (err) {
     next(err);
   }
@@ -65,7 +66,7 @@ export async function verifyEmail (req, res, next) {
     const verifyToken = req.params.token;
     const decodedVerifyToken = jwt.verify(verifyToken, JWT_KEY);
     const id = decodedVerifyToken._id;
-    const user = await UserModel.findByIdAndUpdate(id, {isVerified: true})
+    const user = await TalentModel.findByIdAndUpdate(id, {isVerified: true})
     res.json({message: 'E-Mail is now SUCCESSFULLY verified!'});
     // res.redirect('http://localhost:2404/login')
     // if we have a frontend, we can direct the successful verification to the login page
@@ -78,7 +79,7 @@ export async function verifyEmail (req, res, next) {
 export async function forgotPassword (req, res, next) {
   try {
     const userData = req.body;
-    const userFromDb = await UserModel.findOne({email: userData.email});
+    const userFromDb = await TalentModel.findOne({email: userData.email});
     if(!userFromDb) {
       const err = new Error("There is no user with this email!");
       err.statusCode = 401;
@@ -121,7 +122,7 @@ export async function setNewPassword (req, res, next) {
     const newPassword = req.body.password;
     if(newPassword) {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      const updatedUser = await UserModel.findByIdAndUpdate(id, {
+      const updatedUser = await TalentModel.findByIdAndUpdate(id, {
         password: hashedPassword, 
         isVerifiedTCP: false
       });
@@ -131,7 +132,7 @@ export async function setNewPassword (req, res, next) {
 
     // FIRST REQUEST (EMAIL) CONTINUE... // 
     } else {
-      const user = await UserModel.findByIdAndUpdate(id, {isVerifiedTCP: true})
+      const user = await TalentModel.findByIdAndUpdate(id, {isVerifiedTCP: true})
       res.json({message: 'email for reset your password is verified'});
     }
     // FIRST REQUEST (EMAIL) END... //
@@ -144,12 +145,12 @@ export async function setNewPassword (req, res, next) {
 // GET a specific User
 export async function usersGetSpecific(req, res, next) {
   try {
-    if (!(await UserModel.findById(req.params.id))){
+    if (!(await TalentModel.findById(req.params.id))){
       const err = new Error("No USER with this id in Database!");
       err.statusCode = 422;
       throw err; 
     } 
-    res.status(200).json(await UserModel.findById(req.params.id));
+    res.status(200).json(await TalentModel.findById(req.params.id));
   }catch (err) {
     next(err);
   }
@@ -175,20 +176,20 @@ export async function usersPatchSpecific(req, res, next) {
     // CHECK FIRSTNAME START //
     if(userData.firstName) {
       const firstName = userData.firstName;
-      const user = await UserModel.findByIdAndUpdate(id, {firstName: firstName, new: true});
+      const user = await TalentModel.findByIdAndUpdate(id, {firstName: firstName, new: true});
     } 
     // CHECK FIRSTNAME END //
 
     // CHECK LASTNAME START //
     if(userData.lastName) {
       const lastName = userData.lastName;
-      const user = await UserModel.findByIdAndUpdate(id, {firstName: firstName, new: true});
+      const user = await TalentModel.findByIdAndUpdate(id, {firstName: firstName, new: true});
     } 
     // CHECK LASTNAME END //
 
     // CHECK EMAIL START //
     if(userData.email) {
-      const userFromDb = await UserModel.find(
+      const userFromDb = await TalentModel.find(
         {email: userData.email}, 
         {id: {$not: req.params.id}
       });
@@ -199,7 +200,7 @@ export async function usersPatchSpecific(req, res, next) {
         throw err; 
       } else {
         const newEmail = userData.email;
-        const updatedUser = await UserModel.findByIdAndUpdate(id, {email: newEmail, new: true});
+        const updatedUser = await TalentModel.findByIdAndUpdate(id, {email: newEmail, new: true});
       }
     }
     // CHECK EMAIL END //
@@ -207,18 +208,18 @@ export async function usersPatchSpecific(req, res, next) {
     // CHECK PASSWORD START //
     if(userData.password) {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
-      const user = await UserModel.findByIdAndUpdate(id, {password: hashedPassword, new: true});
+      const user = await TalentModel.findByIdAndUpdate(id, {password: hashedPassword, new: true});
     } 
     // CHECK PASSWORD END //
 
     // CHECK AVATAR BEGIN //
     if(req.file) {
-      await UserModel.findByIdAndUpdate(id, {avatar: `http://localhost:2404/${req.file.path}`});
+      await TalentModel.findByIdAndUpdate(id, {avatar: `http://localhost:2404/${req.file.path}`});
     }
     // CHECK AVATAR END //
     // CHECK & UPDATE EVERY GIVEN PARAMETER END //
     
-    res.json(await UserModel.findById(id));
+    res.json(await TalentModel.findById(id));
   }catch (err) {
     next(err);
   }
@@ -232,7 +233,7 @@ export async function usersDeleteSpecific (req, res, next) {
       err.statusCode = 401;
       throw err;
     }
-    res.status(200).json(await UserModel.findByIdAndDelete(req.params.id));
+    res.status(200).json(await TalentModel.findByIdAndDelete(req.params.id));
   }catch (err) {
     next(err);
   }
@@ -242,7 +243,7 @@ export async function usersDeleteSpecific (req, res, next) {
 export async function usersPostLogin(req, res, next) {
   try {
     const userData = req.body;
-    const userFromDb = await UserModel.findOne({email: userData.email});
+    const userFromDb = await TalentModel.findOne({email: userData.email});
     const isVerified = userFromDb.isVerified
     if(!isVerified) {
       const err = new Error("User is not verified yet, please verify yourself using the link in your email. If the link is older than an hour, please request a new one.");
