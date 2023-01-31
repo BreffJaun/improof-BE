@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 
 // I M P O R T:  R O U T E S
 import talentsRouter from './routes/talents.js';
+import recruitersRouter from './router/recruiters.js';
 import wrongRoutes from './routes/wrongPath.js';
 
 // I M P O R T:  E R R O R  H A N D L E R
@@ -47,8 +48,10 @@ app.use(cors(
 app.use(morgan("dev"));
 
 // ROUTER MIDDLEWARE
-// USERS
+// TALENTS
 app.use('/talents', talentsRouter);
+
+app.use('/recruiters', recruitersRouter);
 
 
 // ERROR HANDLER
