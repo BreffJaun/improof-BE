@@ -7,8 +7,7 @@ import morgan from 'morgan';
 import cookieParser from "cookie-parser";
 
 // I M P O R T:  R O U T E S
-import talentsRouter from './routes/talents.js';
-import recruitersRouter from './router/recruiters.js';
+import userRouter from './routes/users.js'
 import wrongRoutes from './routes/wrongPath.js';
 
 // I M P O R T:  E R R O R  H A N D L E R
@@ -26,6 +25,9 @@ mongoose.connect(MONGO_DB_CONNECTION_STRING,
 // for errors which comes after the successfully connection
 mongoose.connection.on('error', console.log);
 
+// I M P O R T  &  D E C L A R E   B C R Y P T   K E Y 
+const FE_HOST = process.env.FE_HOST
+
 // ========================
 
 // C R E A T E  S E R V E R
@@ -39,7 +41,7 @@ app.use(express.json());
 app.use(cookieParser())
 app.use(cors(
   {
-    origin: 'http://localhost:3000', // fill in here render address
+    origin: FE_HOST, // fill in here render address
   // if you want to add more adresses in cors, make an array with single strings.
     credentials: true
   }
@@ -48,10 +50,8 @@ app.use(cors(
 app.use(morgan("dev"));
 
 // ROUTER MIDDLEWARE
-// TALENTS
-app.use('/talents', talentsRouter);
-
-app.use('/recruiters', recruitersRouter);
+// USER
+app.use('/users', userRouter);
 
 
 // ERROR HANDLER

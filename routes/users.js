@@ -4,24 +4,28 @@ import multer from 'multer';
 
 // I M P O R T:  F U N C T I O N S
 import {validateRequest} from '../middleware/validator.js'
-import { userValidator, userUpdateValidator } from '../middleware/userValidator.js';
+import { 
+  userValidator
+  // , 
+  // userUpdateValidator 
+} from '../middleware/userValidator.js';
 
 // I M P O R T:  C O N T R O L L E R
 import {
-  usersGetAll, 
-  usersPostUser, 
-  usersGetSpecific, 
-  usersPatchSpecific, 
-  usersDeleteSpecific,
-  usersPostLogin,
-  usersChecklogin,
+  addUser, 
+  // getUsers, 
+  getUser,
+  updateUser, 
+  deleteUser,
+  login,
+  checkLogin,
   verifyEmail,
   forgotPassword,
+  verifyResetToken,
   setNewPassword
 } from '../controller/usersController.js';
 
 import { auth } from '../middleware/auth.js';
-// import { admin } from '../middleware/admin.js';
 
 // ========================
 
@@ -32,9 +36,9 @@ const upload = multer({dest: "uploads/"});
 const router = express.Router();
 
 router
-  .route('/')
-    .get(auth, usersGetAll)
-    .post(upload.single('avatar'), userValidator, validateRequest, usersPostUser);
+  .route('/add')
+    // .get(auth, getUsers)
+    .post(userValidator, validateRequest, addUser);
 
 router
   .route('/verify/:token')
@@ -42,26 +46,29 @@ router
     
 router
   .route('/login')
-    .post(usersPostLogin)
+    .post(login)
 
 router
   .route('/checklogin')
-    .get(usersChecklogin)
-
-router
-  .route('/:id')
-    .get(auth, usersGetSpecific)
-    .put(userUpdateValidator, validateRequest, auth, usersPatchSpecific)
-    .delete(auth, usersDeleteSpecific);
+    .get(checkLogin)
 
 router
   .route('/forgotpassword')
     .post(forgotPassword)
-    
+
+router
+  .route("/reset/:token")
+    .get(verifyResetToken);
+
 router
   .route('/setnewpassword/:token')
     .post(setNewPassword)
 
+router
+  .route('/:id')
+    .get(auth, getUser)
+    .put(userValidator, validateRequest, auth, updateUser)
+    .delete(auth, deleteUser);
 
 
   export default router;

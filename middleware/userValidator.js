@@ -11,6 +11,7 @@ export const userValidator = [
     .trim() // takes out whitespaces at the beginning and the end of an string
     .escape(), // changes special chars into normal chars
   body("profile.lastName")
+    .notEmpty()
     .trim()
     .isLength({max:20})
     .escape(),
@@ -29,13 +30,30 @@ export const userValidator = [
     .isLength({min:8})
 ]
 
-export const userUpdateValidator = [
-  body("firstName")
-    .optional()
-    .isAlpha("de-DE", {ignore: " -"})
-    .withMessage("Firstname contains not allowed signs!")
-    .trim(),
-]
+// export const userUpdateValidator = [
+//   body("profile.firstName")
+//     .optional()
+//     .isAlpha("de-DE", {ignore: " -"})
+//     .withMessage("Firstname contains not allowed signs!")
+//     .trim() // takes out whitespaces at the beginning and the end of an string
+//     .escape(), // changes special chars into normal chars
+//   body("profile.lastName")
+//     .optional()
+//     .trim()
+//     .isLength({max:20})
+//     .escape(),
+//   body("profile.email")
+//     .optional()
+//     .trim()
+//     .isEmail()
+//     .normalizeEmail(),
+//   body("profile.password")
+//     .optional()
+//     .trim()
+//     .isStrongPassword()
+//     .withMessage("Password isn't safe enough!")
+//     .isLength({min:8})
+// ]
 
 // normalize() => changes all chars to lowerCase
 
