@@ -38,7 +38,8 @@ export async function addUser (req, res, next) {
         profile: {...newUser.profile, password: hashedPassword, isTalent: true, initials: initials}})     
     }
     if(newUser.profile.isRecruiter) {
-      createdUser = await UserModel.create({...newUser, password: hashedPassword, isRecruiter: true, initials: initials}) 
+      createdUser = await UserModel.create({...newUser, 
+        profile: {...newUser.profile, password: hashedPassword, isRecruiter: true, initials: initials}}) 
     }
 
     // VERIFY EMAIL IMPLEMENT BEGIN //
@@ -93,13 +94,13 @@ export async function verifyEmail (req, res, next) {
     const id = decodedVerifyToken._id;
     const user = await UserModel.findById(id);
     const updatedUser = await UserModel.findByIdAndUpdate(id, 
-      {...user, meta: {...user.meta, isVerified: true}, new: true}
+      {meta: {...user.meta, isVerified: true}}
     )
-    // const user = await UserModel.findByIdAndUpdate(id, {meta: {isVerified: true}})
     res.json({
       message: 'E-Mail is now SUCCESSFULLY verified!',
       status: true,
-      data: ""
+      data: "",
+      user: updatedUser
     });
     // res.redirect(`${BE_HOST}/login`);
     // if we have a frontend, we can direct the successful verification to the login page
@@ -111,17 +112,18 @@ export async function verifyEmail (req, res, next) {
 // LOGIN (POST)
 export async function login(req, res, next) {
   try {
-    const userData = req.body.profile;
-    const userFromDb = await UserModel.findOne({profile: {email: userData.email}});
+    const userData = req.body;
+    const userFromDb = await UserModel.findOne({email: userData.profile.email});
     const id = userFromDb._id;
     const isVerified = userFromDb.meta.isVerified;
     const loginCount = userFromDb.meta.loginCount;
+    let updatedUser;
     if(!isVerified) {
         const err = new Error("User is not verified yet, please verify yourself using the link in your email. If the link is older than an hour, please request a new one.");
         err.statusCode = 401;
         throw err;
     }
-    const checkPassword = await bcrypt.compare(userData.password, userFromDb.profile.password);
+    const checkPassword = await bcrypt.compare(userData.profile.password, userFromDb.profile.password);
     if(!checkPassword) {
       const err = new Error("Invalid password!");
       err.statusCode = 401;
@@ -129,19 +131,19 @@ export async function login(req, res, next) {
     }
 
     // FIRST LOGIN CHECK START //
-    if (loginCount > 0) {
-      const updatedUser = await UserModel.findByIdAndUpdate(id, 
-        {meta: {firstLogin: false}}
+    updatedUser = await UserModel.findByIdAndUpdate(id, 
+      {meta: {...userFromDb.meta, loginCount: loginCount + 1}}
+    )
+    if (loginCount === 1) {
+        updatedUser = await UserModel.findByIdAndUpdate(id, 
+        {meta: {...updatedUser.meta, loginCount: loginCount + 1, firstLogin: false}}
       );
     }
-    const updatedUser = await UserModel.findByIdAndUpdate(id, 
-      {meta: {loginCount: loginCount+1}}
-    )
     // FIRST LOGIN CHECK END //
 
     const token = jwt.sign(
       {
-        email: userData.email, 
+        email: userFromDb.profile.email, 
         userId: userFromDb._id
       }, 
       JWT_KEY, 
@@ -149,7 +151,8 @@ export async function login(req, res, next) {
 
       // INSERT COOKIE CODE START //
       const oneHour = 1000*60*60;
-      res.cookie('loginCookie', token, 
+      res
+      .cookie('loginCookie', token, 
       {
         maxAge: oneHour,
         httpOnly: true,
@@ -159,7 +162,7 @@ export async function login(req, res, next) {
       .json(
       {
         auth: 'loggedin',
-        email: userData.email, 
+        email: userFromDb.profile.email, 
         userId: userFromDb._id,
         message: "Login SUCCESSFUL!",
         status: true,
@@ -175,9 +178,14 @@ export async function login(req, res, next) {
 export async function checkLogin(req, res, next) {
   try {
     const token = req.cookies.loginCookie;
+    console.log(token);
     const tokenDecoded = jwt.verify(token, JWT_KEY);
     console.log('Token in Cookie is valid. User is loggedin');
-    res.status(200).end();
+    res.status(200).json({
+      message: "SUCCESFULLY LOGGED IN",
+      userId: tokenDecoded.userId,
+    })
+    .end();
   } catch (err) {
     next(err);
   }
