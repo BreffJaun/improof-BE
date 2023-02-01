@@ -190,7 +190,6 @@ export async function checkLogin(req, res, next) {
   }
 };
 
-
 // FORGOT PASSWORD (POST)
 export async function forgotPassword(req, res, next) {
   try {
@@ -267,7 +266,6 @@ export async function verifyResetToken(req, res, next) {
   }
 }
 
-
 // SET NEW PASSWORD (POST)
 export async function setNewPassword (req, res, next) {
   try {
@@ -308,7 +306,6 @@ export async function setNewPassword (req, res, next) {
     next(err);
   }
 };
-
 
 // GET A USER (GET)
 export async function getUser(req, res, next) {
