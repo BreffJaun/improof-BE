@@ -183,6 +183,7 @@ export async function checkLogin(req, res, next) {
     console.log('Token in Cookie is valid. User is loggedin');
     res.status(200).json({
       message: "SUCCESFULLY LOGGED IN",
+      status: true,
       user: user,
     })
     .end();

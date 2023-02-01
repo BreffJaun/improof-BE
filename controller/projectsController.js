@@ -49,7 +49,7 @@ export async function getProject(req, res, next) {
       err.statusCode = 422;
       throw err; 
     } 
-    const project = await ProjectModel.findById(req.params.id).populate(["Talent", "Stone"]);
+    const project = await ProjectModel.findById(req.params.id).populate(["team", "stones"]);
     res.status(200).json({
       projectData: project,
       message: 'Search was SUCCESSFUL!',
@@ -65,16 +65,18 @@ export async function getProject(req, res, next) {
 export async function updateUser(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES //
+    const userId = req.toke.userId
     const projectData = req.body;
     const projectId = req.params.id
-    let oldProjectData = await ProjectModel.findById(id);
+    let oldProjectData = await ProjectModel.findById(projectId);
     // DEFINE NEEDED VARIABLES //
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own projects.
     
     // CHECK IF AUTHORIZED (PROJECT IN USER) START //
-    const check = await UserModel.findById(req.token.userId);
-    
+    if(await ProjectModel.findById(projectId, {userId: {$in: {"team"}}})) {
+
+    }
     if (id !== req.token.userId) {
       const err = new Error("Not Authorized!");
       err.statusCode = 401;
