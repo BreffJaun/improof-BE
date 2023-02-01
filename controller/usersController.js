@@ -96,6 +96,7 @@ export async function verifyEmail (req, res, next) {
     const updatedUser = await UserModel.findByIdAndUpdate(id, 
       {meta: {...user.meta, isVerified: true}}
     )
+    // CODE FOR BACKEND ONLY TEST
     // res.status(200).json({
     //   message: 'E-Mail is now SUCCESSFULLY verified!',
     //   status: true,
@@ -191,6 +192,20 @@ export async function checkLogin(req, res, next) {
     next(err);
   }
 };
+
+// LOGOUT (GET)
+export async function logout(req, res, next) {
+  try {
+    res.clearCookie("loginCookie", {sameSite:"none", secure:true});
+    res.status(200).json({ 
+      message: "Logout SUCCESSFULLY!",
+      status: true,
+      data: ""
+    });
+  } catch (err) {
+    next(err);
+  }
+}
 
 // FORGOT PASSWORD (POST)
 export async function forgotPassword(req, res, next) {

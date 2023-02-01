@@ -19,6 +19,7 @@ import {
   deleteUser,
   login,
   checkLogin,
+  logout,
   verifyEmail,
   forgotPassword,
   verifyResetToken,
@@ -26,6 +27,7 @@ import {
 } from '../controller/usersController.js';
 
 import { auth } from '../middleware/auth.js';
+import { get } from 'mongoose';
 
 // ========================
 
@@ -53,6 +55,10 @@ router
 router
   .route('/checklogin')
     .get(checkLogin)
+
+router
+  .route('/logout')
+    get(logout)
 
 router
   .route('/forgotpassword')
