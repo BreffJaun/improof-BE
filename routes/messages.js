@@ -7,7 +7,7 @@ import {
   messagesGetAll,
   updateMessage,
   deleteMessage,
-} from "../controller/messagesController";
+} from "../controller/messagesController.js";
 
 // C R E A T E   R O U T E S
 const router = express.Router();
@@ -15,3 +15,5 @@ const router = express.Router();
 router.route("/").get(messagesGetAll).post(addMessage);
 
 router.route("/:id").delete(deleteMessage).patch(updateMessage);
+
+export default router;

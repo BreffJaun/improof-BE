@@ -5,7 +5,7 @@ import { Schema, model } from "mongoose";
 const messageSchema = new Schema(
   {
     from: { type: Schema.Types.ObjectId }, // Falls nicht geht, type: String
-    text: [{ type: String, required: true }],
+    text: { type: String, required: true },
   },
   { strictQuery: true },
   { timeStamps: true }

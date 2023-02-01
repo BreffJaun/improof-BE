@@ -15,3 +15,5 @@ const router = express.Router();
 router.route("/").get(conversationsGetAll).post(addConversation);
 
 router.route("/:id").delete(deleteConversation).patch(updateConversation);
+
+export default router;
