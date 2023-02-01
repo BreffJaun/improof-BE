@@ -36,8 +36,11 @@ const upload = multer({dest: "uploads/"});
 const router = express.Router();
 
 router
+  .route('/')
+    .get(getUsers)
+
+router
   .route('/add')
-    .get( getUsers)
     .post(userValidator, validateRequest, addUser);
 
 router

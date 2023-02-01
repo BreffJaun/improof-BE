@@ -164,7 +164,7 @@ export async function login(req, res, next) {
         auth: 'loggedin',
         email: userFromDb.profile.email, 
         userId: userFromDb._id,
-        message: "Login SUCCESSFUL!",
+        message: "Login SUCCESSFULL!",
         status: true,
         data: ""
       })
