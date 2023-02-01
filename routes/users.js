@@ -70,7 +70,7 @@ router
 router
   .route('/:id')
     .get(auth, getUser)
-    .patch(userValidator, validateRequest,  updateUser)
+    .patch(userValidator, validateRequest, updateUser)
     .delete(auth, deleteUser);
 
 

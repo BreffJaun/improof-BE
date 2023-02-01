@@ -179,10 +179,11 @@ export async function checkLogin(req, res, next) {
   try {
     const token = req.cookies.loginCookie;
     const tokenDecoded = jwt.verify(token, JWT_KEY);
+    const user = await UserModel.findById(tokenDecoded.userId);
     console.log('Token in Cookie is valid. User is loggedin');
     res.status(200).json({
       message: "SUCCESFULLY LOGGED IN",
-      userId: tokenDecoded.userId,
+      user: user,
     })
     .end();
   } catch (err) {
