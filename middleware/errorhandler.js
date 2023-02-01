@@ -3,7 +3,6 @@ const errorHandler = (err, req, res, next) => {
   // CONSOLE OUTPUT
   console.log('error: ',  err);
 
-
   // RESPONSE OUTPUT
   const statusCode = err.statusCode ?? 500; 
   res.status(statusCode).send({

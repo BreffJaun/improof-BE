@@ -17,13 +17,13 @@ const FE_HOST = process.env.FE_HOST;
 //========================
 
 // ALL USERS (GET)
-// export async function getTalents (req, res, next) {
-//   try {
-//     res.json(await UserModel.find());
-//   }catch (err) {
-//     next(err);
-//   }
-// }
+export async function getUsers (req, res, next) {
+  try {
+    res.json(await UserModel.find());
+  }catch (err) {
+    next(err);
+  }
+}
 
 // ADD USER (POST)
 export async function addUser (req, res, next) {
@@ -96,13 +96,13 @@ export async function verifyEmail (req, res, next) {
     const updatedUser = await UserModel.findByIdAndUpdate(id, 
       {meta: {...user.meta, isVerified: true}}
     )
-    res.json({
+    res.status(200).json({
       message: 'E-Mail is now SUCCESSFULLY verified!',
       status: true,
       data: "",
       user: updatedUser
     });
-    // res.redirect(`${BE_HOST}/login`);
+    // res.redirect(`${FE_HOST}/login`);
     // if we have a frontend, we can direct the successful verification to the login page
   }catch (err) {
     next(err);
@@ -113,7 +113,7 @@ export async function verifyEmail (req, res, next) {
 export async function login(req, res, next) {
   try {
     const userData = req.body;
-    const userFromDb = await UserModel.findOne({email: userData.profile.email});
+    const userFromDb = await UserModel.findOne({"profile.email":  userData.profile.email});
     const id = userFromDb._id;
     const isVerified = userFromDb.meta.isVerified;
     const loginCount = userFromDb.meta.loginCount;
@@ -178,7 +178,6 @@ export async function login(req, res, next) {
 export async function checkLogin(req, res, next) {
   try {
     const token = req.cookies.loginCookie;
-    console.log(token);
     const tokenDecoded = jwt.verify(token, JWT_KEY);
     console.log('Token in Cookie is valid. User is loggedin');
     res.status(200).json({
@@ -195,8 +194,8 @@ export async function checkLogin(req, res, next) {
 // FORGOT PASSWORD (POST)
 export async function forgotPassword(req, res, next) {
   try {
-    const userData = req.body.profile;
-    const userFromDb = await UserModel.findOne({profile: {email: userData.email}});
+    const userData = req.body;
+    const userFromDb = await UserModel.findOne({"profile.email":  userData.profile.email});
     if (!userFromDb) {
       const err = new Error("There is no user with this email!");
       err.statusCode = 401;
@@ -211,19 +210,19 @@ export async function forgotPassword(req, res, next) {
       { expiresIn: "1h" }
     );
     const msg = {
-      to: userData.email,   // Change to your recipient
+      to: userFromDb.profile.email,   // Change to your recipient
       from: SENDGRID_EMAIL, // Change to your verified sender
       subject: "SET A NEW PASSWORD for your 'improof' Account",
       // text: `To change your password, please click on this link: ${BE_HOST}/users/setnewpassword/${verifyToken}`,
       html: `
       <div>
-      <p>Hi ${userFromDb.profile.userName}, </p>
+      <p>Hi ${userFromDb.profile.firstName}, </p>
 
       <p>a request has been received to change the password 
       for your 'improof' account</p>
 
-      <p><a href="${BE_HOST}/users/reset/${verifyToken}" 
-      style="background-color: orange; border-radius: 7px; width: 50px; height: 20px; text-decoration: none;">
+      <p style="background-color: orange; border-radius: 7px; width: 120px; height: 20px; text-decoration: none;">
+      <a href="${BE_HOST}/users/reset/${verifyToken}">
       Reset password</a></p>      
     
       <p>If you did not initiate this request, please contact 
@@ -254,8 +253,15 @@ export async function verifyResetToken(req, res, next) {
     const verifyToken = req.params.token;
     const decodedVerifyToken = jwt.verify(verifyToken, JWT_KEY);
     const id = decodedVerifyToken._id;
-    const user = await UserModel.findByIdAndUpdate(id, {meta: {isVerifiedTCP: true}});
-    res.redirect(`${FE_HOST}/setnewpassword`);
+    const user = await UserModel.findById(id);
+    const updatedUser = await UserModel.findByIdAndUpdate(id, {meta: {...user.meta, isVerifiedTCP: true}});
+    // RES FOR BACKEND TESTING
+    res.status(200).json({
+      message: 'Reset token SUCCESSFULLY verified!',
+      status: true,
+      data: "",
+    });
+    // res.redirect(`${FE_HOST}/setnewpassword`);
   } catch (err) {
     next(err);
   }
@@ -266,9 +272,9 @@ export async function verifyResetToken(req, res, next) {
 export async function setNewPassword (req, res, next) {
   try {
     // CHECK IF ACCOUNT IS VERIFIED TO SET NEW PASSWORD
-    const email = req.body.profile.email;
-    const userFromDb = await UserModel.findOne({meta: {email: email}});
-    if (!userFromDb.isVerifiedTCP) {
+    const userData = req.body;
+    const userFromDb = await UserModel.findOne({"profile.email":  userData.profile.email});
+    if (!userFromDb.meta.isVerifiedTCP) {
       res
         .status(422)
         .json({ 
@@ -283,10 +289,9 @@ export async function setNewPassword (req, res, next) {
     if (newPassword) {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       const updatedUser = await UserModel.findByIdAndUpdate(id, 
-        {profile: {password: hashedPassword}},
-        {meta: {isVerifiedTCP: false}}
+        {profile: {...userFromDb.profile, password: hashedPassword}, 
+        meta: {...userFromDb.meta, isVerifiedTCP: false}}
         );
-      console.log(updatedUser);
       res.status(200).json({ 
         message: "Set new Password was SUCCESSFUL!", 
         status: true,
@@ -328,13 +333,19 @@ export async function getUser(req, res, next) {
 // UPDATE A USER (PATCH)
 export async function updateUser(req, res, next) {
   try {
+    // const reqToken = {
+    //   email: "braun_jeff@web.de", 
+    //   userId: "63da419fbe4a413a49c74be1"
+    // }
     // DEFINE NEEDED VARIABLES //
     const userData = req.body;
     const id = req.params.id
+    let oldUserData = await UserModel.findById(id);
     // DEFINE NEEDED VARIABLES //
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START//
+    // if (id !== reqToken.userId) {
     if (id !== req.token.userId) {
       const err = new Error("Not Authorized!");
       err.statusCode = 401;
@@ -348,7 +359,8 @@ export async function updateUser(req, res, next) {
     if(userData.profile.firstName) {
       const firstName = userData.profile.firstName;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {firstName: firstName, new: true}});
+        {profile: {...oldUserData.profile, firstName: firstName}}, {new: true});
+      oldUserData = user
     } 
     // CHECK FIRSTNAME END //
 
@@ -356,7 +368,8 @@ export async function updateUser(req, res, next) {
     if(userData.lastName) {
       const lastName = userData.profile.lastName;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {lastName: lastName, new: true}});
+        {profile: {...oldUserData.profile, lastName: lastName}}, {new: true});
+      oldUserData = user
     } 
     // CHECK LASTNAME END //
 
@@ -364,7 +377,8 @@ export async function updateUser(req, res, next) {
     if(userData.profile.email) {
       const email = userData.profile.email;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {email: email, new: true}});
+        {profile: {...oldUserData.profile, email: email}}, {new: true});
+      oldUserData = user
       // ALTERNATIVE VERSION - PLEASE CHECKOUT ! ! !
       // const userFromDb = await UserModel.find(
       //   {email: userData.email}, 
@@ -386,14 +400,16 @@ export async function updateUser(req, res, next) {
     if(userData.profile.password) {
       const hashedPassword = await bcrypt.hash(userData.profile.password, 10);
       const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {password: hashedPassword, new: true}});
+        {profile: {...oldUserData.profile, password: hashedPassword}}, {new: true});
+      oldUserData = user
     } 
     // CHECK PASSWORD END //
 
     // CHECK AVATAR BEGIN //
     if(req.file) {
       await UserModel.findByIdAndUpdate(id, 
-        {profile: {avatar: `${BE_HOST}/${req.file.path}`}});
+        {profile: {...oldUserData.profile, avatar: `${BE_HOST}/${req.file.path}`}}, {new: true});
+      oldUserData = user
     }
     // CHECK AVATAR END //
 
@@ -401,7 +417,8 @@ export async function updateUser(req, res, next) {
     if(userData.profile.description) {
       const description = userData.profile.description;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {description: description, new: true}});
+        {profile: {...oldUserData.profile, description: description}}, {new: true});
+      oldUserData = user
     } 
     // CHECK DESCRIPTION END //
 
@@ -409,7 +426,8 @@ export async function updateUser(req, res, next) {
     if(userData.profile.goal) {
       const goal = userData.profile.goal;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {goal: goal, new: true}});
+        {profile: {...oldUserData.profile, goal: goal}}, {new: true});
+      oldUserData = user
     } 
     // CHECK GOAL END //
 
@@ -417,7 +435,8 @@ export async function updateUser(req, res, next) {
     if(userData.profile.position) {
       const position = userData.profile.position;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {position: position, new: true}});
+        {profile: {...oldUserData.profile, position: position}}, {new: true});
+      oldUserData = user
     } 
     // CHECK POSITION END //
 
@@ -425,7 +444,8 @@ export async function updateUser(req, res, next) {
     if(userData.profile.toolsAndSkills) {
       const toolsAndSkills = userData.profile.toolsAndSkills;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {toolsAndSkills: toolsAndSkills, new: true}});
+        {profile: {...oldUserData.profile, toolsAndSkills: toolsAndSkills}}, {new: true});
+      oldUserData = user
     } 
     // CHECK TOOLSANDSKILLS END //
     // ** UPDATE PROFILE END ** //
@@ -435,7 +455,8 @@ export async function updateUser(req, res, next) {
     if(userData.contact.mobile) {
       const mobile = userData.contact.mobile;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {mobile: mobile, new: true}});
+        {contact: {...oldUserData.contact, mobile: mobile}}, {new: true});
+      oldUserData = user
     } 
     // CHECK MOBILE END //
 
@@ -443,7 +464,8 @@ export async function updateUser(req, res, next) {
     if(userData.contact.website) {
       const website = userData.contact.website;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {website: website, new: true}});
+        {contact: {...oldUserData.contact, website: website}}, {new: true});
+      oldUserData = user
     } 
     // CHECK WEBSITE END //
 
@@ -451,7 +473,8 @@ export async function updateUser(req, res, next) {
     if(userData.contact.online1) {
       const online1 = userData.contact.online1;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {online1: online1, new: true}});
+        {contact: {...oldUserData.contact, online1: online1}}, {new: true});
+      oldUserData = user
     } 
     // CHECK ONLINE1 END //
 
@@ -459,7 +482,8 @@ export async function updateUser(req, res, next) {
     if(userData.contact.online2) {
       const online2 = userData.contact.online2;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {online2: online2, new: true}});
+        {contact: {...oldUserData.contact, online2: online2}}, {new: true});
+      oldUserData = user
     } 
     // CHECK ONLINE2 END //
 
@@ -467,7 +491,8 @@ export async function updateUser(req, res, next) {
     if(userData.contact.online3) {
       const online3 = userData.contact.online3;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {online3: online3, new: true}});
+        {contact: {...oldUserData.contact, online3: online3}}, {new: true});
+      oldUserData = user
     } 
     // CHECK ONLINE3 END //
 
@@ -475,7 +500,8 @@ export async function updateUser(req, res, next) {
     if(userData.contact.company) {
       const company = userData.contact.company;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {company: company, new: true}});
+        {contact: {...oldUserData.contact, company: company}}, {new: true});
+      oldUserData = user
     } 
     // CHECK COMPANY END //
     // ** UPDATE CONTACT END ** //
@@ -485,23 +511,27 @@ export async function updateUser(req, res, next) {
     if(userData.location.street) {
       const street = userData.location.street;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {location: {street: street, new: true}});
+        {location: {...oldUserData.location, street: street}}, {new: true});
+      oldUserData = user
     } 
     // CHECK STREET END //
 
     // CHECK ZIP START //
-    if(userData.location.zip) {
+    // console.log('userData.location.zip', userData.location.zip);
+    if (userData.location.zip) {
       const zip = userData.location.zip;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {location: {zip: zip, new: true}});
-    } 
+      const user = await UserModel.findByIdAndUpdate(id,
+        {location: {...oldUserData.location, zip: zip}}, {new: true});
+      oldUserData = user
+    };
     // CHECK ZIP END //
 
     // CHECK CITY START //
     if(userData.location.city) {
       const city = userData.location.city;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {location: {city: city, new: true}});
+        {location: {...oldUserData.location, city: city}}, {new: true});
+      oldUserData = user
     } 
     // CHECK CITY END //
     // ** UPDATE LOCATION END ** //
@@ -511,7 +541,8 @@ export async function updateUser(req, res, next) {
     if(userData.meta.darkMode) {
       const darkMode = userData.location.darkMode;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {meta: {darkMode: darkMode, new: true}});
+        {meta: {...oldUserData.meta, darkMode: darkMode}}, {new: true});
+      oldUserData = user
     }
     // CHECK DARKMODE END //
 
@@ -519,7 +550,8 @@ export async function updateUser(req, res, next) {
     if(userData.meta.colorTheme) {
       const colorTheme = userData.location.colorTheme;
       const user = await UserModel.findByIdAndUpdate(id, 
-        {meta: {colorTheme: colorTheme, new: true}});
+        {meta: {...oldUserData.meta, colorTheme: colorTheme}}, {new: true});
+      oldUserData = user
     }
     // CHECK COLORTHEME END //
     // ** UPDATE META END ** //
@@ -539,7 +571,12 @@ export async function updateUser(req, res, next) {
 // Delete specific User
 export async function deleteUser (req, res, next) {
   try {
+    // const reqToken = {
+    //   email: "braun_jeff@web.de", 
+    //   userId: "63da55d70ac97122dfebc711"
+    // }
      // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
+    // if (req.params.id !== reqToken.userId) {
     if (req.params.id !== req.token.userId) {
       const err = new Error("Not Authorized! DELETE");
       err.statusCode = 401;

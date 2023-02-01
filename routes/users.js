@@ -13,7 +13,7 @@ import {
 // I M P O R T:  C O N T R O L L E R
 import {
   addUser, 
-  // getUsers, 
+  getUsers, 
   getUser,
   updateUser, 
   deleteUser,
@@ -37,7 +37,7 @@ const router = express.Router();
 
 router
   .route('/add')
-    // .get(auth, getUsers)
+    .get( getUsers)
     .post(userValidator, validateRequest, addUser);
 
 router
@@ -61,14 +61,14 @@ router
     .get(verifyResetToken);
 
 router
-  .route('/setnewpassword/:token')
+  .route('/setnewpassword')
     .post(setNewPassword)
 
 router
   .route('/:id')
     .get(auth, getUser)
-    .put(userValidator, validateRequest, auth, updateUser)
+    .patch(userValidator, validateRequest,  updateUser)
     .delete(auth, deleteUser);
 
 
-  export default router;
+export default router;

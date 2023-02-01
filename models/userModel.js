@@ -8,32 +8,32 @@ const userSchema = new Schema({
     lastName: {type: String, required: true},
     email: {type: String, required: true, unique: true},
     password: {type: String, required: true},
-    avatar: {type: String},
-    description: {type: String},
-    goal: {type: String},
-    position: {type: String},
-    initials: {type: String},
+    avatar: {type: String, default: ""},
+    description: {type: String, default: ""},
+    goal: {type: String, default: ""},
+    position: {type: String, default: ""},
+    initials: {type: String, default: ""},
     // TALENT
-    toolsAndSkills: {type: String},
+    toolsAndSkills: {type: String, default: ""},
     isTalent: {type: Boolean, default: false},
     // RECRUITER
     isRecruiter: {type: Boolean, default: false},
   }, 
   contact: {
-    mobile: {type: String},
-    website: {type: String},
+    mobile: {type: String, default: ""},
+    website: {type: String, default: ""},
     // TALENT
-    online1: {type: String},
-    online2: {type: String},
-    online3: {type: String},
+    online1: {type: String, default: ""},
+    online2: {type: String, default: ""},
+    online3: {type: String, default: ""},
     // RECRUITER
-    company: {type: String}, 
+    company: {type: String, default: ""}, 
   },
   // TALENT
   location: {
-    street: {type: String},
-    zip: {type: String},
-    city: {type: String}
+    street: {type: String, default: ""},
+    zip: {type: String, default: ""},
+    city: {type: String, default: ""}
   },
   meta: {
     isVerified: {type: Boolean, default: false},
