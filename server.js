@@ -8,7 +8,6 @@ import cookieParser from "cookie-parser";
 
 // I M P O R T:  R O U T E S
 import userRouter from './routes/users.js';
-// import projectRouter from './routes/projects.js';
 import wrongRoutes from './routes/wrongPath.js';
 
 // I M P O R T:  E R R O R  H A N D L E R
@@ -53,9 +52,6 @@ app.use(morgan("dev"));
 // ROUTER MIDDLEWARE
 // USER
 app.use('/users', userRouter);
-
-// PROJECT
-// app.use('/projects', projectRouter);
 
 
 // ERROR HANDLER

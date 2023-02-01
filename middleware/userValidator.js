@@ -19,8 +19,7 @@ export const userValidator = [
     .notEmpty()
     .withMessage("Email has to be set!")
     .trim()
-    .isEmail()
-    .normalizeEmail(),
+    .isEmail(),
   body("profile.password")
     .notEmpty()
     .withMessage("Password has to bet set!")
