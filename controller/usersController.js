@@ -355,17 +355,21 @@ export async function updateUser(req, res, next) {
     // CHECK FIRSTNAME START //
     if(userData.profile.firstName) {
       const firstName = userData.profile.firstName;
+      const lastName = oldUserData.profile.lastName;
+      const initials = firstName[0].toUpperCase() + lastName[0].toUpperCase()
       const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, firstName: firstName}}, {new: true});
+        {profile: {...oldUserData.profile, firstName: firstName, initials: initials}}, {new: true});
       oldUserData = user
     } 
     // CHECK FIRSTNAME END //
 
     // CHECK LASTNAME START //
     if(userData.lastName) {
+      const firstName = oldUserData.profile.lastName;
       const lastName = userData.profile.lastName;
+      const initials = firstName[0].toUpperCase() + lastName[0].toUpperCase()
       const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, lastName: lastName}}, {new: true});
+        {profile: {...oldUserData.profile, lastName: lastName, initials: initials}}, {new: true});
       oldUserData = user
     } 
     // CHECK LASTNAME END //
