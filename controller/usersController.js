@@ -1,8 +1,9 @@
 // I M P O R T:  E X T E R N A L  D E P E N D E N C I E S
-import * as dotenv from "dotenv"; dotenv.config();
-import bcrypt from 'bcrypt';
+import * as dotenv from "dotenv";
+dotenv.config();
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import sgMail from '@sendgrid/mail';
+import sgMail from "@sendgrid/mail";
 
 // I M P O R T:  F U N C T I O N S
 import UserModel from '../models/userModel.js';
@@ -84,7 +85,7 @@ export async function addUser (req, res, next) {
   }catch (err) {
     next(err);
   }
-};
+}
 
 // VERIFY EMAIL FOR USER ACCOUNT (GET)
 export async function verifyEmail (req, res, next) {
@@ -105,10 +106,104 @@ export async function verifyEmail (req, res, next) {
     // });
     res.redirect(`${FE_HOST}/login`);
     // if we have a frontend, we can direct the successful verification to the login page
-  }catch (err) {
+  } catch (err) {
     next(err);
   }
-};
+}
+
+// LOGIN (POST)
+export async function login(req, res, next) {
+  try {
+    const userData = req.body;
+    const userFromDb = await UserModel.findOne({
+      "profile.email": userData.profile.email,
+    });
+    const id = userFromDb._id;
+    const isVerified = userFromDb.meta.isVerified;
+    const loginCount = userFromDb.meta.loginCount;
+    let updatedUser;
+    if (!isVerified) {
+      const err = new Error(
+        "User is not verified yet, please verify yourself using the link in your email. If the link is older than an hour, please request a new one."
+      );
+      err.statusCode = 401;
+      throw err;
+    }
+    const checkPassword = await bcrypt.compare(
+      userData.profile.password,
+      userFromDb.profile.password
+    );
+    if (!checkPassword) {
+      const err = new Error("Invalid password!");
+      err.statusCode = 401;
+      throw err;
+    }
+
+    // FIRST LOGIN CHECK START //
+    updatedUser = await UserModel.findByIdAndUpdate(id, {
+      meta: { ...userFromDb.meta, loginCount: loginCount + 1 },
+    });
+    if (loginCount === 1) {
+      updatedUser = await UserModel.findByIdAndUpdate(id, {
+        meta: {
+          ...updatedUser.meta,
+          loginCount: loginCount + 1,
+          firstLogin: false,
+        },
+      });
+    }
+    // FIRST LOGIN CHECK END //
+
+    const token = jwt.sign(
+      {
+        email: userFromDb.profile.email,
+        userId: userFromDb._id,
+      },
+      JWT_KEY,
+      { expiresIn: "1d" }
+    );
+
+    // INSERT COOKIE CODE START //
+    const oneHour = 1000 * 60 * 60;
+    res
+      .cookie("loginCookie", token, {
+        maxAge: oneHour,
+        httpOnly: true,
+        sameSite: "none",
+        secure: true,
+      })
+      .json({
+        auth: "loggedin",
+        email: userFromDb.profile.email,
+        userId: userFromDb._id,
+        message: "Login SUCCESSFUL!",
+        status: true,
+        data: "",
+      });
+    // INSERT COOKIE CODE BEGIN //
+  } catch (err) {
+    next(err);
+  }
+}
+
+// CHECK IF ALREADY LOGGED IN (AND IF TOKEN IS STILL VALID) (GET)
+export async function checkLogin(req, res, next) {
+  try {
+    const token = req.cookies.loginCookie;
+    const tokenDecoded = jwt.verify(token, JWT_KEY);
+    const user = await UserModel.findById(tokenDecoded.userId);
+    console.log("Token in Cookie is valid. User is loggedin");
+    res
+      .status(200)
+      .json({
+        message: "SUCCESFULLY LOGGED IN",
+        user: user,
+      })
+      .end();
+  } catch (err) {
+    next(err);
+  }
+}
 
 // LOGIN (POST)
 export async function login(req, res, next) {
@@ -216,13 +311,18 @@ export async function forgotPassword(req, res, next) {
       const err = new Error("There is no user with this email!");
       err.statusCode = 401;
       throw err;
+      throw err;
     }
 
     // VERIFY EMAIL IMPLEMENT BEGIN //
     sgMail.setApiKey(SENDGRID_KEY);
+    sgMail.setApiKey(SENDGRID_KEY);
     const verifyToken = jwt.sign(
       { email: userData.email, _id: userFromDb._id },
+      { email: userData.email, _id: userFromDb._id },
       JWT_KEY,
+      { expiresIn: "1h" }
+    );
       { expiresIn: "1h" }
     );
     const msg = {
@@ -262,11 +362,15 @@ export async function forgotPassword(req, res, next) {
     next(err);
   }
 }
+}
 
+// VERIFY RESET TOKEN (GET)
+export async function verifyResetToken(req, res, next) {
 // VERIFY RESET TOKEN (GET)
 export async function verifyResetToken(req, res, next) {
   try {
     const verifyToken = req.params.token;
+    const decodedVerifyToken = jwt.verify(verifyToken, JWT_KEY);
     const decodedVerifyToken = jwt.verify(verifyToken, JWT_KEY);
     const id = decodedVerifyToken._id;
     const user = await UserModel.findById(id);
@@ -320,10 +424,13 @@ export async function setNewPassword (req, res, next) {
       });
     }
   } catch (err) {
+  } catch (err) {
     next(err);
   }
-};
+}
 
+// GET A USER (GET)
+export async function getUser(req, res, next) {
 // GET A USER (GET)
 export async function getUser(req, res, next) {
   try {
@@ -342,8 +449,10 @@ export async function getUser(req, res, next) {
   }catch (err) {
     next(err);
   }
-};
+}
 
+// UPDATE A USER (PATCH)
+export async function updateUser(req, res, next) {
 // UPDATE A USER (PATCH)
 export async function updateUser(req, res, next) {
   try {
@@ -357,6 +466,9 @@ export async function updateUser(req, res, next) {
     let oldUserData = await UserModel.findById(id);
     // DEFINE NEEDED VARIABLES //
 
+    // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
+    // CHECK IF AUTHORIZED START//
+    // if (id !== reqToken.userId) {
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START//
     // if (id !== reqToken.userId) {
@@ -413,7 +525,7 @@ export async function updateUser(req, res, next) {
       // }
     }
     // CHECK EMAIL END //
-    
+
     // CHECK PASSWORD START //
     if(userData.profile.password) {
       const hashedPassword = await bcrypt.hash(userData.profile.password, 10);
@@ -584,7 +696,7 @@ export async function updateUser(req, res, next) {
   }catch (err) {
     next(err);
   }
-};
+}
 
 // Delete specific User
 export async function deleteUser (req, res, next) {
