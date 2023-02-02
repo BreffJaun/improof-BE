@@ -8,7 +8,8 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
 // I M P O R T:  R O U T E S
-import userRouter from "./routes/users.js";
+import userRouter from "./routes/users.js";;
+import projectRouter from './routes/projects.js';
 import wrongRoutes from "./routes/wrongPath.js";
 import messageRouter from "./routes/messages.js";
 import conversationRouter from "./routes/conversations.js";
@@ -62,6 +63,9 @@ app.use("/users", userRouter);
 
 // CONVERSATIONS
 app.use("/conversations", conversationRouter);
+
+// PROJECT
+app.use('/projects', projectRouter);
 
 // MESSAGES
 app.use("/messages", messageRouter);

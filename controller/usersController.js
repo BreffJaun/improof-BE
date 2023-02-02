@@ -193,6 +193,7 @@ export async function login(req, res, next) {
         email: userFromDb.profile.email,
         userId: userFromDb._id,
         message: "Login SUCCESSFULL!",
+        message: "Login SUCCESSFULL!",
         status: true,
         data: "",
       });

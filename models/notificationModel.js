@@ -3,8 +3,7 @@ import {Schema, model} from "mongoose";
 
 // S C H E M A  -  D A T A   S T R U C T U R E
 const notificationSchema = new Schema({
-  receiverT: [{type: Schema.Types.ObjectId, ref: "Talent"}],
-  receiverR: [{type: Schema.Types.ObjectId, ref: "Recruiter"}],
+  receiver: [{type: Schema.Types.ObjectId, ref: "User"}],
   notText: {type: String}
 }
 , 
