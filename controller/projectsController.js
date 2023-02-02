@@ -213,7 +213,7 @@ export async function updateProject(req, res, next) {
           receiver: checkNewMembers,
           notText: `${userName} added you to the team of the Project "${oldProjectData.name}"!`
         });
-        checkNewMembers.map((member) => UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+        checkNewMembers.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
   
         const project = await ProjectModel.findByIdAndUpdate(projectId, 
           {team: newTeam}, {new: true});
@@ -284,7 +284,7 @@ export async function deleteProject(req, res, next) {
     // TAKE PROJECT DATA
     const projectId = req.params.id
     const oldProject = await ProjectModel.findById(projectId);
-    const projectMembers = await ProjectModel.findById(projectId).team;
+    const projectMembers = oldProject.team;
     // DEFINE NEEDED VARIABLES END //
 
     // IMPORTANT: A additionally check (after auth) if the given id is identic to one of them in the project. We do that, because we want that the user could only delete projects on which he is involved.
@@ -316,3 +316,4 @@ export async function deleteProject(req, res, next) {
     next(err);
   }
 }
+
