@@ -58,7 +58,7 @@ router
 
 router
   .route('/logout')
-    get(logout)
+    .get(logout)
 
 router
   .route('/forgotpassword')
