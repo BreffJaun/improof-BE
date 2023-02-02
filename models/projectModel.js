@@ -8,7 +8,7 @@ const projectSchema = new Schema({
   thumbnail: {type: String, default: ""},
   color: {type: String, default: "bg-gO"},
   category: {type: String, default: ""},
-  team: [{type: Schema.Types.ObjectId, ref: "Talent"}],
+  team: [{type: Schema.Types.ObjectId, ref: "User"}],
   inviteOthers: [{type: String}],
   private: {type: Boolean, default: false},
   stones: [{type: Schema.Types.ObjectId, ref: "Stone"}],

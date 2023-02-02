@@ -14,7 +14,7 @@ import {
   addProject,
   getProject,
   updateProject,
-  // deleteProject
+  deleteProject
 } from '../controller/projectsController.js';
 
 import { auth } from '../middleware/auth.js';
@@ -28,15 +28,18 @@ const upload = multer({dest: "uploads/"});
 const router = express.Router();
 
 router
-  .route('/add')
+  .route('/')
     .get(getProjects)
+
+router
+  .route('/add')
     .post(projectValidator, validateRequest, addProject);
 
 router
   .route('/:id')
     .get(getProject)
-    .patch(auth, updateProject)
-    // .delete(deleteProject)
+    .patch(updateProject)
+    .delete(deleteProject)
 
 
 export default router;

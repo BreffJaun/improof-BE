@@ -7,6 +7,7 @@ import sgMail from '@sendgrid/mail';
 // I M P O R T:  F U N C T I O N S
 import ProjectModel from '../models/projectModel.js';
 import UserModel from "../models/userModel.js";
+import StoneModel from "../models/stoneModel.js";
 import NotificationModel from "../models/notificationModel.js";
 
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y 
@@ -19,21 +20,19 @@ const FE_HOST = process.env.FE_HOST;
 //========================
 
 // ALL PROJECTS (GET)
-export async function getProjects (req, res, next) {
+export async function getProjects(req, res, next) {
   try {
-    res.json(await ProjectModel.find());
+    res.json(await ProjectModel.find().populate(["team", "stones"]));
   }catch (err) {
     next(err);
   }
 }
 
 // CREATE PROJECT (POST)
-export async function addProject (req, res, next) {
+export async function addProject(req, res, next) {
   try {
     // TAKE USERID
-    const token = req.cookies.loginCookie;
-    const tokenDecoded = jwt.verify(token, JWT_KEY);
-    const userId = tokenDecoded.userId;
+    const userId = req.body.userId;
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
 
@@ -42,7 +41,7 @@ export async function addProject (req, res, next) {
     const teamMemberIds = projectData.team;
 
     // CREATE NEW PROJECT
-    const newProject = await ProjectModel.create(projectData).populate(["team", "stones"]);
+    const newProject = await ProjectModel.create(projectData);
     const projectId = newProject._id;
 
     // AVATAR IMPLEMENT BEGIN //
@@ -68,37 +67,39 @@ export async function addProject (req, res, next) {
     });
     await filteredMemberIds.map((member) => UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
 
-    // VERIFY EMAIL IMPLEMENT BEGIN //
+    // INVITE EMAIL IMPLEMENT BEGIN //
     const usersToInvite = newProject.inviteOthers;
     sgMail.setApiKey(SENDGRID_KEY)
-    const msg = {
-      bcc: usersToInvite, // Change to your recipient
-      from: SENDGRID_EMAIL, // Change to your verified sender
-      subject: "INVITATION to your 'improof' account",
-      // text: `To verify your email, please click on this link: http://localhost:2404/users/verify/${verifyToken}`,
-      html: `
-      <div>
-      <p>Hi, </p>
+    usersToInvite.map(async (member) => { 
+      const msg = {
+        to: member, // Change to your recipient
+        from: SENDGRID_EMAIL, // Change to your verified sender
+        subject: "INVITATION to 'improof'",
+        // text: `To verify your email, please click on this link: http://localhost:2404/users/verify/${verifyToken}`,
+        html: `
+        <div>
+        <p>Hi, </p>
 
-      <p>${user.profile.firstName + " " + user.profile.lastName} invited you to join the 'improof-community'.</p>
+        <p>${user.profile.firstName + " " + user.profile.lastName} invited you to join the 'improof-community'.</p>
 
-      <p style="background-color: orange; border-radius: 7px; width: 80px; height: 20px; text-decoration: none;">
-      Please register here
-      <a href="${FE_HOST}/register">
-      Register</a></p>      
+        <p style="background-color: orange; border-radius: 7px; width: 120px; height: 30px; text-decoration: none;">
+        Please register here
+        <a href="${FE_HOST}/register">
+        Register</a></p>      
 
-      <p>and contact <a href="${FE_HOST}/myprofile/${user._id}">
-      ${user.profile.firstName + " " + user.profile.lastName}</a></p>
-    
-      <p>Your 'improof' Team </p>
+        <p>and contact <a href="${FE_HOST}/myprofile/${user._id}">
+        ${user.profile.firstName + " " + user.profile.lastName}</a></p>
       
-      <div>`,
-    }
-    const response = await sgMail.send(msg);
-    // VERIFY EMAIL IMPLEMENT END //
+        <p>Your 'improof' Team </p>
+        
+        <div>`,
+      }
+      const response = await sgMail.send(msg);    
+    })
+    // INVITE EMAIL IMPLEMENT END //
 
     // CLEAR INVITEOTHERS FROM PROJECT
-    await ProjectModel.findByIdAndUpdate(projectId, {...newProject, inviteOthers: []});
+    await ProjectModel.findByIdAndUpdate(projectId, {...newProject, inviteOthers: newProject.inviteOthers.length = 0});
 
     res.status(201).json({
       message: "Project SUCCESSFULLY added!", 
@@ -110,7 +111,7 @@ export async function addProject (req, res, next) {
     }
 }
 
-// GET A PROJECT
+// GET A PROJECT (GET)
 export async function getProject(req, res, next) {
   try {
     const projectId = req.params.id
@@ -133,247 +134,185 @@ export async function getProject(req, res, next) {
 // UPDATE A PROJECT (PATCH)
 export async function updateProject(req, res, next) {
   try {
-    // DEFINE NEEDED VARIABLES //
+    // DEFINE NEEDED VARIABLES START//
     // TAKE USERID
-    const token = req.cookies.loginCookie;
-    const tokenDecoded = jwt.verify(token, JWT_KEY);
-    const userId = tokenDecoded.userId;
+    const userId = req.body.userId
     const user = await UserModel.findById(userId);
+    const userName = user.profile.firstName + " " + user.profile.lastName;
 
     // TAKE PROJECT DATA
+    const newData = req.body;
     const projectId = req.params.id
-    const projectData = req.body;
+    const project = await ProjectModel.findById(projectId);
+    const projectMembers = project.team;
     let oldProjectData = await ProjectModel.findById(projectId);
-    // DEFINE NEEDED VARIABLES //
+    // DEFINE NEEDED VARIABLES END //
 
-    // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own projects.
+    // IMPORTANT: A additionally check (after auth) if the given id is identic to one of them in the project. We do that, because we want that the user could only change projects on which he is involved.
     
     // CHECK IF AUTHORIZED (PROJECT IN USER) START //
-    // if(await ProjectModel.findById(projectId, {userId: {$in: {"team"}}})) {
-
-    // }
-    if (id !== req.token.userId) {
-      const err = new Error("Not Authorized!");
+    if (!(projectMembers.includes(userId))) {
+      const err = new Error("Not Authorized to UPDATE the Project!");
       err.statusCode = 401;
       throw err;
     }
     // CHECK IF AUTHORIZED (PROJECT IN USER) END //
     
     // ## CHECK & UPDATE EVERY GIVEN PARAMETER START ## //
-    // ** UPDATE PROFILE START ** //
-    // CHECK FIRSTNAME START //
-    if(userData.profile.firstName) {
-      const firstName = userData.profile.firstName;
-      const lastName = oldUserData.profile.lastName;
-      const initials = firstName[0].toUpperCase() + lastName[0].toUpperCase()
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, firstName: firstName, initials: initials}}, {new: true});
-      oldUserData = user
+    // CHECK NAME START //
+    if(newData.name) {
+      const newName = newData.name;
+      const project = await ProjectModel.findByIdAndUpdate(projectId, 
+        {name: newName}, {new: true});
+      oldProjectData = project;
     } 
-    // CHECK FIRSTNAME END //
-
-    // CHECK LASTNAME START //
-    if(userData.lastName) {
-      const firstName = oldUserData.profile.lastName;
-      const lastName = userData.profile.lastName;
-      const initials = firstName[0].toUpperCase() + lastName[0].toUpperCase()
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, lastName: lastName, initials: initials}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK LASTNAME END //
-
-    // CHECK EMAIL START //
-    if(userData.profile.email) {
-      const email = userData.profile.email;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, email: email}}, {new: true});
-      oldUserData = user
-      // ALTERNATIVE VERSION - PLEASE CHECKOUT ! ! !
-      // const userFromDb = await UserModel.find(
-      //   {email: userData.email}, 
-      //   {id: {$not: req.params.id}
-      // });
-      // console.log(userFromDb);
-      // if(userFromDb.length > 0) {
-      //   const err = new Error("There is already a user with this email!");
-      //   err.statusCode = 401;
-      //   throw err; 
-      // } else {
-      //   const newEmail = userData.email;
-      //   const updatedUser = await UserModel.findByIdAndUpdate(id, {email: newEmail, new: true});
-      // }
-    }
-    // CHECK EMAIL END //
-    
-    // CHECK PASSWORD START //
-    if(userData.profile.password) {
-      const hashedPassword = await bcrypt.hash(userData.profile.password, 10);
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, password: hashedPassword}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK PASSWORD END //
-
-    // CHECK AVATAR BEGIN //
-    if(req.file) {
-      await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, avatar: `${BE_HOST}/${req.file.path}`}}, {new: true});
-      oldUserData = user
-    }
-    // CHECK AVATAR END //
+    // CHECK NAME END //
 
     // CHECK DESCRIPTION START //
-    if(userData.profile.description) {
-      const description = userData.profile.description;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, description: description}}, {new: true});
-      oldUserData = user
+    if(newData.description) {
+      const newDescription = newData.description;
+      const project = await ProjectModel.findByIdAndUpdate(projectId, 
+        {description: newDescription}, {new: true});
+      oldProjectData = project;
     } 
     // CHECK DESCRIPTION END //
 
-    // CHECK GOAL START //
-    if(userData.profile.goal) {
-      const goal = userData.profile.goal;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, goal: goal}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK GOAL END //
-
-    // CHECK POSITION START //
-    if(userData.profile.position) {
-      const position = userData.profile.position;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, position: position}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK POSITION END //
-
-    // CHECK TOOLSANDSKILLS START //
-    if(userData.profile.toolsAndSkills) {
-      const toolsAndSkills = userData.profile.toolsAndSkills;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {profile: {...oldUserData.profile, toolsAndSkills: toolsAndSkills}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK TOOLSANDSKILLS END //
-    // ** UPDATE PROFILE END ** //
-
-    // ** UPDATE CONTACT START ** //
-    // CHECK MOBILE START //
-    if(userData.contact.mobile) {
-      const mobile = userData.contact.mobile;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {...oldUserData.contact, mobile: mobile}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK MOBILE END //
-
-    // CHECK WEBSITE START //
-    if(userData.contact.website) {
-      const website = userData.contact.website;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {...oldUserData.contact, website: website}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK WEBSITE END //
-
-    // CHECK ONLINE1 START //
-    if(userData.contact.online1) {
-      const online1 = userData.contact.online1;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {...oldUserData.contact, online1: online1}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK ONLINE1 END //
-
-    // CHECK ONLINE2 START //
-    if(userData.contact.online2) {
-      const online2 = userData.contact.online2;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {...oldUserData.contact, online2: online2}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK ONLINE2 END //
-
-    // CHECK ONLINE3 START //
-    if(userData.contact.online3) {
-      const online3 = userData.contact.online3;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {...oldUserData.contact, online3: online3}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK ONLINE3 END //
-
-    // CHECK COMPANY START //
-    if(userData.contact.company) {
-      const company = userData.contact.company;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {contact: {...oldUserData.contact, company: company}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK COMPANY END //
-    // ** UPDATE CONTACT END ** //
-
-    // ** UPDATE LOCATION START ** //
-    // CHECK STREET START //
-    if(userData.location.street) {
-      const street = userData.location.street;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {location: {...oldUserData.location, street: street}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK STREET END //
-
-    // CHECK ZIP START //
-    // console.log('userData.location.zip', userData.location.zip);
-    if (userData.location.zip) {
-      const zip = userData.location.zip;
-      const user = await UserModel.findByIdAndUpdate(id,
-        {location: {...oldUserData.location, zip: zip}}, {new: true});
-      oldUserData = user
-    };
-    // CHECK ZIP END //
-
-    // CHECK CITY START //
-    if(userData.location.city) {
-      const city = userData.location.city;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {location: {...oldUserData.location, city: city}}, {new: true});
-      oldUserData = user
-    } 
-    // CHECK CITY END //
-    // ** UPDATE LOCATION END ** //
-
-    // ** UPDATE META START ** //
-    // CHECK DARKMODE START //
-    if(userData.meta.darkMode) {
-      const darkMode = userData.location.darkMode;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {meta: {...oldUserData.meta, darkMode: darkMode}}, {new: true});
-      oldUserData = user
+    // CHECK THUMBNAIL START //
+    if (req.file) {
+      await ProjectModel.findByIdAndUpdate(projectId, 
+        {thumbnail: `${BE_HOST}/${req.file.path}`}, {new: true});
+        oldProjectData = project;
     }
-    // CHECK DARKMODE END //
+    // CHECK THUMBNAIL END //
 
-    // CHECK COLORTHEME START //
-    if(userData.meta.colorTheme) {
-      const colorTheme = userData.location.colorTheme;
-      const user = await UserModel.findByIdAndUpdate(id, 
-        {meta: {...oldUserData.meta, colorTheme: colorTheme}}, {new: true});
-      oldUserData = user
+    // CHECK COLOR START //
+    if(newData.color) {
+      const newColor = newData.color;
+      const project = await ProjectModel.findByIdAndUpdate(projectId, 
+        {color: newColor}, {new: true});
+      oldProjectData = project;
     }
-    // CHECK COLORTHEME END //
-    // ** UPDATE META END ** //
-    // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //    
-    const updatedUser = await UserModel.findById(id);
+    // CHECK COLOR END //
+
+    // CHECK CATEGORY START //
+    if(newData.category) {
+      const newCategory = newData.category;
+      const project = await ProjectModel.findByIdAndUpdate(projectId, 
+        {category: newCategory}, {new: true});
+      oldProjectData = project;
+    }
+    // CHECK CATEGORY END //
+
+    // CHECK TEAM START //
+    if(newData.team) {
+      const newTeam = newData.team;
+      const oldTeam = oldProjectData.team;
+      const checkNewMembers = newTeam.filter((member) => !(oldTeam.includes(member)));
+      if(checkNewMembers.length > 0) {
+        const newNotification = await NotificationModel.create({
+          receiver: checkNewMembers,
+          notText: `${userName} added you to the team of the Project "${oldProjectData.name}"!`
+        });
+        checkNewMembers.map((member) => UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+  
+        const project = await ProjectModel.findByIdAndUpdate(projectId, 
+          {team: newTeam}, {new: true});
+        oldProjectData = project;
+      }
+    }
+    // CHECK TEAM END //
+
+    // CHECK INVITE OTHERS START //
+    if(newData.inviteOthers && newData.inviteOthers.length > 0) {
+      // INVITE EMAIL IMPLEMENT BEGIN //
+      const usersToInvite = newData.inviteOthers;
+      sgMail.setApiKey(SENDGRID_KEY)
+      const msg = {
+        bcc: usersToInvite, // Change to your recipient
+        from: SENDGRID_EMAIL, // Change to your verified sender
+        subject: "INVITATION to your 'improof' account",
+        // text: `To verify your email, please click on this link: http://localhost:2404/users/verify/${verifyToken}`,
+        html: `
+        <div>
+        <p>Hi, </p>
+
+        <p>${user.profile.firstName + " " + user.profile.lastName} invited you to join the 'improof-community'.</p>
+
+        <p style="background-color: orange; border-radius: 7px; width: 80px; height: 20px; text-decoration: none;">
+        Please register here
+        <a href="${FE_HOST}/register">
+        Register</a></p>      
+
+        <p>and contact <a href="${FE_HOST}/myprofile/${user._id}">
+        ${user.profile.firstName + " " + user.profile.lastName}</a></p>
+      
+        <p>Your 'improof' Team </p>
+        
+        <div>`,
+      }
+      const response = await sgMail.send(msg);
+    // INVITE EMAIL IMPLEMENT END //
+    }
+    // CHECK INVITE OTHERS END //
+
+    // CHECK STONES BEGIN //
+    // Stones will be created and edited on an other route with another controller!
+    // CHECK STONES BEGIN //
+
+    // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //  
+
+    const updatedProject = await ProjectModel.findById(projectId).populate(["team", "stones"]);
     res.status(200).json({
-      userData: updatedUser,
       message: 'Update was SUCCESSFUL!',
+      status: true,
+      data: updatedProject
+    });
+  }catch (err) {
+    next(err);
+  }
+};
+
+// DELETE PROJECT
+export async function deleteProject(req, res, next) {
+  try {
+    // DEFINE NEEDED VARIABLES START//
+    // TAKE USERID
+    const userId = req.body.userId
+    const user = await UserModel.findById(userId);
+    const userName = user.profile.firstName + " " + user.profile.lastName;
+
+    // TAKE PROJECT DATA
+    const projectId = req.params.id
+    const oldProject = await ProjectModel.findById(projectId);
+    const projectMembers = await ProjectModel.findById(projectId).team;
+    // DEFINE NEEDED VARIABLES END //
+
+    // IMPORTANT: A additionally check (after auth) if the given id is identic to one of them in the project. We do that, because we want that the user could only delete projects on which he is involved.
+    
+    // CHECK IF AUTHORIZED (PROJECT IN USER) START //
+    if (!(projectMembers.includes(userId))) {
+      const err = new Error("Not Authorized to DELETE the Project!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // CHECK IF AUTHORIZED (PROJECT IN USER) END //
+    
+    // CREATE NOTIFICATION FOR ALL PROJECT MEMBERS START //
+    const newNotification = await NotificationModel.create({
+      receiver: projectMembers,
+      notText: `${userName} deleted the Project "${oldProject.name}"!`
+    });
+    await projectMembers.map((member) => UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+    // CREATE NOTIFICATION FOR ALL PROJECT MEMBERS END //
+
+    const deletedProject = await ProjectModel.findByIdAndDelete(req.params.id).populate(["team", "stones"]);
+    res.status(200).json({
+      userData: deletedProject,
+      message: 'Delete was SUCCESSFUL!',
       status: true,
       data: ""
     });
   }catch (err) {
     next(err);
   }
-};
+}

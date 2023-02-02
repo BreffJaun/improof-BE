@@ -12,7 +12,6 @@ export const projectValidator = [
     .notEmpty()
     .withMessage("Please describe what about this project is about!")
     .trim()
-    .isLength({max:20})
     .escape()
 ]
 

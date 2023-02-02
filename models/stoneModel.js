@@ -3,11 +3,11 @@ import {Schema, model} from "mongoose";
 
 // S C H E M A  -  D A T A   S T R U C T U R E
 const stoneSchema = new Schema({
-  title: {type, String, required: true},
+  title: {type: String, required: true},
   description: {type: String, required: false},
   kind: {type: String, required: true},
   media: [{type: String}],
-  contributors: [{type: Schema.Types.ObjectId, ref: "Talent"}],
+  contributors: [{type: Schema.Types.ObjectId, ref: "User"}],
 }
 , 
 {strictQuery: true},

@@ -571,7 +571,7 @@ export async function updateUser(req, res, next) {
   }
 };
 
-// Delete specific User
+// DELETE USER ACCOUNT
 export async function deleteUser (req, res, next) {
   try {
     // const reqToken = {
