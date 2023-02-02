@@ -10,10 +10,8 @@ import cookieParser from "cookie-parser";
 // I M P O R T:  R O U T E S
 import userRouter from "./routes/users.js";
 import wrongRoutes from "./routes/wrongPath.js";
-import usersRouter from "./routes/users.js";
-import messagesRouter from "./routes/messages.js";
-import conversationsRouter from "./routes/conversations.js";
-import wrongRoutes from "./routes/wrongPath.js";
+import messageRouter from "./routes/messages.js";
+import conversationRouter from "./routes/conversations.js";
 
 // I M P O R T:  E R R O R  H A N D L E R
 import { errorHandler } from "./middleware/errorhandler.js";
@@ -59,13 +57,14 @@ app.use(
 app.use(morgan("dev"));
 
 // ROUTER MIDDLEWARE
-// TALENTS
-app.use("/users", usersRouter);
+// USERS
+app.use("/users", userRouter);
 
 // CONVERSATIONS
-app.use("/conversations", conversationsRouter);
+app.use("/conversations", conversationRouter);
 
-app.use("/messages", messagesRouter);
+// MESSAGES
+app.use("/messages", messageRouter);
 
 // ERROR HANDLER
 app.use(errorHandler);
