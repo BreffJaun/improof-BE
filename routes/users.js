@@ -38,6 +38,7 @@ const upload = multer({ dest: "uploads/" });
 const router = express.Router();
 
 router.route("/").get(getUsers);
+
 router.route("/add").post(userValidator, validateRequest, addUser);
 
 router.route("/verify/:token").get(verifyEmail);

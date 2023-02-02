@@ -1,6 +1,5 @@
 // I M P O R T:  E X T E R N A L  D E P E N D E N C I E S
-import * as dotenv from "dotenv";
-dotenv.config();
+import * as dotenv from "dotenv"; dotenv.config();
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import sgMail from "@sendgrid/mail";
@@ -193,7 +192,6 @@ export async function login(req, res, next) {
         email: userFromDb.profile.email,
         userId: userFromDb._id,
         message: "Login SUCCESSFULL!",
-        message: "Login SUCCESSFULL!",
         status: true,
         data: "",
       });
@@ -208,7 +206,7 @@ export async function checkLogin(req, res, next) {
   try {
     const token = req.cookies.loginCookie;
     const tokenDecoded = jwt.verify(token, JWT_KEY);
-    const user = await UserModel.findById(tokenDecoded.userId);
+    const user = await UserModel.findById(tokenDecoded.userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"]);
     console.log("Token in Cookie is valid. User is loggedin");
     res
       .status(200)
@@ -222,6 +220,7 @@ export async function checkLogin(req, res, next) {
     next(err);
   }
 }
+
 // LOGOUT (GET)
 export async function logout(req, res, next) {
   try {
