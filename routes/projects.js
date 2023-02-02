@@ -4,9 +4,9 @@ import multer from 'multer';
 
 // I M P O R T:  F U N C T I O N S
 import {validateRequest} from '../middleware/validator.js'
-// import { 
-
-// } from '../middleware/userValidator.js';
+import { 
+  projectValidator
+} from '../middleware/projectValidator.js';
 
 // I M P O R T:  C O N T R O L L E R
 import {
@@ -14,8 +14,8 @@ import {
   addProject,
   getProject,
   updateProject,
-  deleteProject
-} from '../controller/usersController.js';
+  // deleteProject
+} from '../controller/projectsController.js';
 
 import { auth } from '../middleware/auth.js';
 
@@ -30,13 +30,13 @@ const router = express.Router();
 router
   .route('/add')
     .get(getProjects)
-    .post(addProject);
+    .post(projectValidator, validateRequest, addProject);
 
 router
   .route('/:id')
     .get(getProject)
-    .patch(updateProject)
-    .delete(deleteProject)
+    .patch(auth, updateProject)
+    // .delete(deleteProject)
 
 
 export default router;

@@ -7,6 +7,7 @@ import sgMail from '@sendgrid/mail';
 // I M P O R T:  F U N C T I O N S
 import ProjectModel from '../models/projectModel.js';
 import UserModel from "../models/userModel.js";
+import NotificationModel from "../models/notificationModel.js";
 
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y 
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue"
@@ -26,15 +27,83 @@ export async function getProjects (req, res, next) {
   }
 }
 
-// ADD PROJECT (POST)
+// CREATE PROJECT (POST)
 export async function addProject (req, res, next) {
   try {
+    // TAKE USERID
+    const token = req.cookies.loginCookie;
+    const tokenDecoded = jwt.verify(token, JWT_KEY);
+    const userId = tokenDecoded.userId;
+    const user = await UserModel.findById(userId);
+    const userName = user.profile.firstName + " " + user.profile.lastName;
+
+    // TAKE PROJECT DATA
     const projectData = req.body;
-    const newProject = await ProjectModel.create(projectData).populate(["Talent", "Stone"]);
+    const teamMemberIds = projectData.team;
+
+    // CREATE NEW PROJECT
+    const newProject = await ProjectModel.create(projectData).populate(["team", "stones"]);
+    const projectId = newProject._id;
+
+    // AVATAR IMPLEMENT BEGIN //
+    if (req.file) {
+      await ProjectModel.findByIdAndUpdate(projectId, {
+        thumbnail: `${BE_HOST}/${req.file.path}`,
+      });
+    } else {
+      await ProjectModel.findByIdAndUpdate(projectId, {
+        thumbnail: `${BE_HOST}/assets/images/coffypaste_icon_avatar.png`,
+      });
+    }
+    // AVATAR IMPLEMENT END //
+
+    // ADD PROJECT TO EVERY TEAMMEMBER
+    await teamMemberIds.map((member) => UserModel.findByIdAndUpdate(member, {$push: {myProjects: newProject._id}}));
+
+    // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS
+    const filteredMemberIds = teamMemberIds.filter((member) => member === userId);
+    const newNotification = await NotificationModel.create({
+      receiver: filteredMemberIds,
+      notText: `${userName} created a new Project and added you to the team!`
+    });
+    await filteredMemberIds.map((member) => UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+
+    // VERIFY EMAIL IMPLEMENT BEGIN //
+    const usersToInvite = newProject.inviteOthers;
+    sgMail.setApiKey(SENDGRID_KEY)
+    const msg = {
+      bcc: usersToInvite, // Change to your recipient
+      from: SENDGRID_EMAIL, // Change to your verified sender
+      subject: "INVITATION to your 'improof' account",
+      // text: `To verify your email, please click on this link: http://localhost:2404/users/verify/${verifyToken}`,
+      html: `
+      <div>
+      <p>Hi, </p>
+
+      <p>${user.profile.firstName + " " + user.profile.lastName} invited you to join the 'improof-community'.</p>
+
+      <p style="background-color: orange; border-radius: 7px; width: 80px; height: 20px; text-decoration: none;">
+      Please register here
+      <a href="${FE_HOST}/register">
+      Register</a></p>      
+
+      <p>and contact <a href="${FE_HOST}/myprofile/${user._id}">
+      ${user.profile.firstName + " " + user.profile.lastName}</a></p>
+    
+      <p>Your 'improof' Team </p>
+      
+      <div>`,
+    }
+    const response = await sgMail.send(msg);
+    // VERIFY EMAIL IMPLEMENT END //
+
+    // CLEAR INVITEOTHERS FROM PROJECT
+    await ProjectModel.findByIdAndUpdate(projectId, {...newProject, inviteOthers: []});
+
     res.status(201).json({
       message: "Project SUCCESSFULLY added!", 
       status: true,
-      data: ""
+      data: newProject
     })
     } catch (err) {
       next(err);
@@ -44,17 +113,17 @@ export async function addProject (req, res, next) {
 // GET A PROJECT
 export async function getProject(req, res, next) {
   try {
-    if (!(await ProjectModel.findById(req.params.id))){
+    const projectId = req.params.id
+    if (!(await ProjectModel.findById(projectId))){
       const err = new Error("No Project with this id in Database!");
       err.statusCode = 422;
       throw err; 
     } 
-    const project = await ProjectModel.findById(req.params.id).populate(["team", "stones"]);
+    const project = await ProjectModel.findById(projectId).populate(["team", "stones"]);
     res.status(200).json({
-      projectData: project,
       message: 'Search was SUCCESSFUL!',
       status: true,
-      data: ""
+      data: project
     });
   }catch (err) {
     next(err);
@@ -62,21 +131,27 @@ export async function getProject(req, res, next) {
 };
 
 // UPDATE A PROJECT (PATCH)
-export async function updateUser(req, res, next) {
+export async function updateProject(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES //
-    const userId = req.toke.userId
-    const projectData = req.body;
+    // TAKE USERID
+    const token = req.cookies.loginCookie;
+    const tokenDecoded = jwt.verify(token, JWT_KEY);
+    const userId = tokenDecoded.userId;
+    const user = await UserModel.findById(userId);
+
+    // TAKE PROJECT DATA
     const projectId = req.params.id
+    const projectData = req.body;
     let oldProjectData = await ProjectModel.findById(projectId);
     // DEFINE NEEDED VARIABLES //
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own projects.
     
     // CHECK IF AUTHORIZED (PROJECT IN USER) START //
-    if(await ProjectModel.findById(projectId, {userId: {$in: {"team"}}})) {
+    // if(await ProjectModel.findById(projectId, {userId: {$in: {"team"}}})) {
 
-    }
+    // }
     if (id !== req.token.userId) {
       const err = new Error("Not Authorized!");
       err.statusCode = 401;

@@ -5,10 +5,11 @@ import {Schema, model} from "mongoose";
 const projectSchema = new Schema({
   name: {type: String, required: true},
   description: {type: String, required: true},
-  thumbnail: {type: String},
+  thumbnail: {type: String, default: ""},
   color: {type: String, default: "bg-gO"},
-  category: {type: Boolean, default: true},
+  category: {type: String, default: ""},
   team: [{type: Schema.Types.ObjectId, ref: "Talent"}],
+  inviteOthers: [{type: String}],
   private: {type: Boolean, default: false},
   stones: [{type: Schema.Types.ObjectId, ref: "Stone"}],
 }
