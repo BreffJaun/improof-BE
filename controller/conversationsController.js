@@ -52,7 +52,6 @@ export async function addConversation(req, res, next) {
       from: userId,
       text: req.body.message,
     });
-    console.log(message);
 
     const newConversation = await ConversationModel.create({
       participants: participants,
@@ -76,55 +75,51 @@ export async function addConversation(req, res, next) {
 }
 
 // UPDATE CONVERSATION
-export async function updateConversation(req, res, next) {
-  try {
-    const conversationId = req.body.conversationId;
-    const updatedConversation = await ConversationModel.findByIdAndUpdate(
-      conversationId,
-      req.body,
-      {
-        new: true,
-      }
-    );
+// export async function updateConversation(req, res, next) {
+//   try {
+//     const conversationId = req.params.conversationId;
+//     const updatedConversation = await ConversationModel.findByIdAndUpdate(
+//       conversationId,
+//       req.body,
+//       {
+//         new: true,
+//       }
+//     );
 
-    res.status(201).json({
-      message: "conversation updated successfully",
-      status: true,
-      data: updatedConversation,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
+//     res.status(201).json({
+//       message: "conversation updated successfully",
+//       status: true,
+//       data: updatedConversation,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// }
 
-// DELETE CONVERSATION
-export async function deleteConversation(req, res, next) {
-  try {
-    // Get the participants of the conversation:
-    // TAKE USERID - the sender of the message
-    const token = req.cookies.loginCookie;
-    const tokenDecoded = jwt.verify(token, JWT_KEY);
-    const userId = tokenDecoded.userId;
+// Wenn noch Zeit da ist, überlegen wir wie wir es machen eine Conversation komplet zu lösen, weil wir es so gemacht und gedacht haben bei der messages ein User kann nur die Nachrinchten die von ihm ersetllt wurden löschen...
 
-    // TAKE RECEIVERID - the receiver of the message
-    const receiverId = req.params.receiverId;
+// // DELETE CONVERSATION
+// export async function deleteConversation(req, res, next) {
+//   try {
+//     // TAKE RECEIVERID - the receiver of the message
+//     const receiverId = req.params.receiverId;
 
-    const conversationId = req.body.conversationId;
+//     const conversationId = req.body.conversationId;
 
-    await ConversationModel.findByIdAndDelete(conversationId);
-    await UserModel.findById(userId, {
-      $pull: { conversations: conversationId },
-    });
-    await UserModel.findById(receiverId, {
-      $pull: { conversations: conversationId },
-    });
+//     await ConversationModel.findByIdAndDelete(conversationId);
+//     await UserModel.findById(userId, {
+//       $pull: { conversations: conversationId },
+//     });
+//     await UserModel.findById(receiverId, {
+//       $pull: { conversations: conversationId },
+//     });
 
-    res.status(201).send({
-      message: "conversation successfully deleted",
-      status: true,
-      data: "",
-    });
-  } catch (error) {
-    next(error);
-  }
-}
+//     res.status(201).send({
+//       message: "conversation successfully deleted",
+//       status: true,
+//       data: "",
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// }
