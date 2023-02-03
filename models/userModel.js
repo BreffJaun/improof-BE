@@ -49,10 +49,7 @@ const userSchema = new Schema(
     notifications: [{ type: Schema.Types.ObjectId, ref: "Notification" }],
     conversations: [{ type: Schema.Types.ObjectId, ref: "Conversation" }],
     date: { type: Date, default: Date.now },
-    // TALENTS
     follows: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    // RECRUITER
-    starTalents: [{ type: Schema.Types.ObjectId, ref: "User" }],
   },
   { strictQuery: true },
   { timeStamps: true }

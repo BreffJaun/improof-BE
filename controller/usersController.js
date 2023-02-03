@@ -710,26 +710,21 @@ export async function followUser(req, res, next) {
     const follUserId = req.body.follUserId;
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
-    const isTalent = req.body.isTalent;
-    const isRecruiter = req.body.isRecruiter;
     // DEFINE NEEDED VARIABLES //
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START//
-    // if (userId !== req.token.userId) {
-    //   const err = new Error("Not Authorized!");
-    //   err.statusCode = 401;
-    //   throw err;
-    // }
+    if (userId !== req.token.userId) {
+      const err = new Error("Not Authorized!");
+      err.statusCode = 401;
+      throw err;
+    }
     // CHECK IF AUTHORIZED END//
 
     // ADD FOLLOWED USER START //
-    if (isTalent && !user.follows.includes(follUserId)) {
+    if (!user.follows.includes(follUserId)) {
       const user = await UserModel.findByIdAndUpdate(userId, 
         {$push: {follows: follUserId}}, { new: true });
-    } else if (isRecruiter && !user.starTalents.includes(follUserId)) {
-      const user = await UserModel.findByIdAndUpdate(userId, 
-        {$push: {starTalents: follUserId}}, { new: true });      
     } else {
       const err = new Error("You already follow this talent!");
       err.statusCode = 401;
@@ -764,26 +759,21 @@ export async function leadUser(req, res, next) {
     const userId = req.body.userId;
     const follUserId = req.body.follUserId;
     const user = await UserModel.findById(userId);
-    const isTalent = req.body.isTalent;
-    const isRecruiter = req.body.isRecruiter;
     // DEFINE NEEDED VARIABLES //
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START//
-    if (userId !== req.token.userId) {
-      const err = new Error("Not Authorized!");
-      err.statusCode = 401;
-      throw err;
-    }
+    // if (userId !== req.token.userId) {
+    //   const err = new Error("Not Authorized!");
+    //   err.statusCode = 401;
+    //   throw err;
+    // }
     // CHECK IF AUTHORIZED END//
 
     // ADD FOLLOWED USER START //
-    if (isTalent && user.follows.includes(follUserId)) {
+    if (user.follows.includes(follUserId)) {
       const user = await UserModel.findByIdAndUpdate(userId, 
         {$pull: {follows: follUserId}}, { new: true });
-    } else if (isRecruiter && user.starTalents.includes(follUserId)) {
-      const user = await UserModel.findByIdAndUpdate(userId, 
-        {$pull: {starTalents: follUserId}}, { new: true });      
     } else {
       const err = new Error("You don't follow this talent!");
       err.statusCode = 401;
