@@ -12,6 +12,8 @@ import {
 import {
   getProjects,
   addProject,
+  followProject,
+  leadProject,
   getProject,
   updateProject,
   deleteProject
@@ -36,10 +38,18 @@ router
     .post(projectValidator, validateRequest, addProject);
 
 router
+  .route('/follow/add')
+    .patch(followProject) // auth
+  
+router
+  .route('/follow/delete')
+    .delete(leadProject) //auth
+
+router
   .route('/:id')
-    .get(getProject)
-    .patch(updateProject)
-    .delete(deleteProject)
+    .get(auth, getProject)
+    .patch(auth, updateProject)
+    .delete(auth, deleteProject)
 
 
 export default router;

@@ -115,6 +115,114 @@ export async function addProject(req, res, next) {
     }
 }
 
+// FOLLOW A PROJECT / STARPROJECT (PATCH) (N)
+export async function followProject(req, res, next) {
+  try {
+    // DEFINE NEEDED VARIABLES //
+    const userId = req.body.userId;
+    const projectId = req.body.projectId;
+    const user = await UserModel.findById(userId);
+    const project = await ProjectModel.findById(projectId);
+    const userName = user.profile.firstName + " " + user.profile.lastName;
+    const projectName = project.name;
+    const projectMembers = project.team;
+    const isRecruiter = user.profile.isRecruiter;
+    const isTalent = user.profile.isTalent;
+    // DEFINE NEEDED VARIABLES //
+
+    // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
+    // CHECK IF AUTHORIZED START//
+    // if (userId !== req.token.userId) {
+    //   const err = new Error("Not Authorized FOLLOW!");
+    //   err.statusCode = 401;
+    //   throw err;
+    // }
+    // CHECK IF AUTHORIZED END//
+
+    // ADD FOLLOWED PROJECT START //
+    if (!user.starProjects.includes(projectId)) {
+      const user = await UserModel.findByIdAndUpdate(userId, 
+        {$push: {starProjects: projectId}}, { new: true });
+    } else {
+      const err = new Error("You already follow this project!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // ADD FOLLOWED USER END //
+
+    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
+    if(isRecruiter) {
+      const newNotification = await NotificationModel.create({
+        receiver: projectMembers,
+        notText: `A recruiter follows from now on your project "${projectName}"! Could be worse for you 😎`
+      });
+      projectMembers.map(async (member) => await UserModel.findByIdAndUpdate
+      (member, {$push: {notifications: newNotification._id}}));
+    }
+    if(isTalent) {
+      const newNotification = await NotificationModel.create({
+        receiver: projectMembers,
+        notText: `${userName} follows from now on your project "${projectName}"! Keep it up 🥳`
+      });
+      projectMembers.map(async (member) => await UserModel.findByIdAndUpdate
+      (member, {$push: {notifications: newNotification._id}}));
+    }
+    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
+
+    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
+
+    res.status(200).json({
+      message: "Follow was SUCCESSFUL!",
+      status: true,
+      data: updatedUser,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// LEAD A PROJECT / STARPROJECT (DELETE)
+export async function leadProject(req, res, next) {
+  try {
+    // DEFINE NEEDED VARIABLES //
+    const userId = req.body.userId;
+    const projectId = req.body.projectId;
+    const user = await UserModel.findById(userId);
+    const project = await ProjectModel.findById(projectId);
+    // DEFINE NEEDED VARIABLES //
+
+    // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
+    // CHECK IF AUTHORIZED START //
+    // if (userId !== req.token.userId) {
+    //   const err = new Error("Not Authorized!");
+    //   err.statusCode = 401;
+    //   throw err;
+    // }
+    // CHECK IF AUTHORIZED END //
+
+    // LEAD FOLLOWED PROJECT START //
+    if (user.starProjects.includes(projectId)) {
+      const user = await UserModel.findByIdAndUpdate(userId, 
+        {$pull: {starProjects: projectId}}, { new: true });
+    } else {
+      const err = new Error("You don't follow this project!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // LEAD FOLLOWED PROJECT END //
+
+    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
+
+    res.status(200).json({
+      message: "Lead was SUCCESSFUL!",
+      status: true,
+      data: updatedUser,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // GET A PROJECT (GET)
 export async function getProject(req, res, next) {
   try {

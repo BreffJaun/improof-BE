@@ -776,7 +776,7 @@ export async function leadUser(req, res, next) {
     }
     // CHECK IF AUTHORIZED END//
 
-    // ADD FOLLOWED USER START //
+    // LEAD FOLLOWED USER START //
     if (user.follows.includes(follUserId)) {
       const user = await UserModel.findByIdAndUpdate(userId, 
         {$pull: {follows: follUserId}}, { new: true });
@@ -785,7 +785,7 @@ export async function leadUser(req, res, next) {
       err.statusCode = 401;
       throw err;
     }
-    // ADD FOLLOWED USER END //
+    // LEAD FOLLOWED USER END //
 
     const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
 
