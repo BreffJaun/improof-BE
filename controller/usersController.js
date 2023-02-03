@@ -366,7 +366,7 @@ export async function getUser(req, res, next) {
     }
     const user = await UserModel.findById(req.params.id).populate(["starProjects", "notifications", "conversations", "follows", "starTalents"]).populate({
       path: "myProjects",
-      popoulate: {
+      populate: {
         path:"team",
         model: "ProjectModel"
       }
