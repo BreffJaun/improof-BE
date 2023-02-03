@@ -39,11 +39,11 @@ router
 
 router
   .route('/follow/add')
-    .patch(followProject) // auth
+    .patch(auth, followProject)
   
 router
   .route('/follow/delete')
-    .delete(leadProject) //auth
+    .delete(auth, leadProject)
 
 router
   .route('/:id')
