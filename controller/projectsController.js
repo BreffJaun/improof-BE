@@ -101,12 +101,10 @@ export async function addProject(req, res, next) {
     // CLEAR INVITEOTHERS FROM PROJECT
     await ProjectModel.findByIdAndUpdate(projectId, {...newProject, inviteOthers: newProject.inviteOthers.length = 0});
 
-    const populatedProject = await ProjectModel.findById(projectId).populate(["team"]);
-
     res.status(201).json({
       message: "Project SUCCESSFULLY added!", 
       status: true,
-      data: populatedProject
+      data: newProject
     })
     } catch (err) {
       next(err);
