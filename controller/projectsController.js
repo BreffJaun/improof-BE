@@ -59,13 +59,14 @@ export async function addProject(req, res, next) {
     // ADD PROJECT TO EVERY TEAMMEMBER
     teamMemberIds.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {myProjects: newProject._id}}));
 
-    // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS
+    // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS START //
     const filteredMemberIds = teamMemberIds.filter((member) => member === userId);
     const newNotification = await NotificationModel.create({
       receiver: filteredMemberIds,
       notText: `${userName} created a new Project and added you to the team!`
     });
     filteredMemberIds.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+    // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS START //
 
     // INVITE EMAIL IMPLEMENT BEGIN //
     const usersToInvite = newProject.inviteOthers;
@@ -111,19 +112,32 @@ export async function addProject(req, res, next) {
     }
 }
 
-// ADD STAR PROJECT (POST)
+// ADD STAR PROJECT (PATCH)
 export async function addStarProject(req, res, next) {
   try {
     // TAKE USERID
     const userId = req.body.userId;
+    const isRecruiter = req.body.isRecruiter;
             
     // TAKE PROJECT DATA
     const projectId = req.body.projectId;
+    const project = await ProjectModel.findById(projectId);
+    const projectMembers = project.team
 
     // ADD PROJECT TO STARPROJECTS
     const updatedUser =  await UserModel.findByIdAndUpdate(userId, {$push: {starProjects: projectId}}, {new: true});
 
     const user = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"]);
+
+    // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS START //
+    if(isRecruiter) {
+      const newNotification = await NotificationModel.create({
+        receiver: projectMembers,
+        notText: `A recruiter added your Project '${project.name}' to his 'Star Projects!`
+      });
+      projectMembers.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+    }
+    // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS START //
 
     res.status(201).json({
       message: "Project SUCCESSFULLY added to 'Star Projects'!", 
