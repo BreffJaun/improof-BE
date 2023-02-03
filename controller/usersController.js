@@ -740,7 +740,7 @@ export async function followUser(req, res, next) {
     const updatedFollowUser = await UserModel.findByIdAndUpdate(follUserId, {$push: {notifications: newNotification._id}});
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
 
-    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"])
+    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
 
     res.status(200).json({
       message: "Follow was SUCCESSFUL!",
