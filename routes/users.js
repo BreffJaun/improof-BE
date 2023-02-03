@@ -76,11 +76,11 @@ router
     
 router
   .route('/follow/add')
-    .patch(followUser)
+    .patch(auth, followUser)
 
 router
   .route('/follow/delete')
-    .delete(leadUser)
+    .delete(auth, leadUser)
 
 router
   .route('/:id')
