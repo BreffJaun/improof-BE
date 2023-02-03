@@ -715,7 +715,7 @@ export async function followUser(req, res, next) {
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START//
     if (userId !== req.token.userId) {
-      const err = new Error("Not Authorized!");
+      const err = new Error("Not Authorized FOLLOW!");
       err.statusCode = 401;
       throw err;
     }
