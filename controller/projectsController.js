@@ -35,7 +35,7 @@ export async function addProject(req, res, next) {
     const userId = req.body.userId;
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
-
+    
     // TAKE PROJECT DATA
     const projectData = req.body;
     const teamMemberIds = projectData.team;
@@ -57,7 +57,7 @@ export async function addProject(req, res, next) {
     // AVATAR IMPLEMENT END //
 
     // ADD PROJECT TO EVERY TEAMMEMBER
-    await teamMemberIds.map((member) => UserModel.findByIdAndUpdate(member, {$push: {myProjects: newProject._id}}));
+    teamMemberIds.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {myProjects: newProject._id}}));
 
     // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS
     const filteredMemberIds = teamMemberIds.filter((member) => member === userId);
@@ -105,6 +105,54 @@ export async function addProject(req, res, next) {
       message: "Project SUCCESSFULLY added!", 
       status: true,
       data: newProject
+    })
+    } catch (err) {
+      next(err);
+    }
+}
+
+// ADD STAR PROJECT (POST)
+export async function addStarProject(req, res, next) {
+  try {
+    // TAKE USERID
+    const userId = req.body.userId;
+            
+    // TAKE PROJECT DATA
+    const projectId = req.body.projectId;
+
+    // ADD PROJECT TO STARPROJECTS
+    const updatedUser =  await UserModel.findByIdAndUpdate(userId, {$push: {starProjects: projectId}}, {new: true});
+
+    const user = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"]);
+
+    res.status(201).json({
+      message: "Project SUCCESSFULLY added to 'Star Projects'!", 
+      status: true,
+      data: user
+    })
+    } catch (err) {
+      next(err);
+    }
+}
+
+// DELETE STAR PROJECT (DELETE)
+export async function deleteStarProject(req, res, next) {
+  try {
+    // TAKE USERID
+    const userId = req.body.userId;
+            
+    // TAKE PROJECT DATA
+    const projectId = req.body.projectId;
+
+    // ADD PROJECT TO STARPROJECTS
+    const updatedUser =  await UserModel.findByIdAndUpdate(userId, {$pull: {starProjects: projectId}}, {new: true});
+
+    const user = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"]);
+
+    res.status(201).json({
+      message: "Project SUCCESSFULLY deleted from 'Star Projects'!", 
+      status: true,
+      data: user
     })
     } catch (err) {
       next(err);
@@ -272,7 +320,7 @@ export async function updateProject(req, res, next) {
   }
 };
 
-// DELETE PROJECT
+// DELETE PROJECT (DELETE)
 export async function deleteProject(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES START//
@@ -305,7 +353,12 @@ export async function deleteProject(req, res, next) {
     projectMembers.map(async(member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
     // CREATE NOTIFICATION FOR ALL PROJECT MEMBERS END //
 
+    // DELETE PROJECT DOCUMENT FROM DB //
     const deletedProject = await ProjectModel.findByIdAndDelete(req.params.id).populate(["team", "stones"]);
+
+    // DELETE PROJECT FROM TEAM MEMBER ACCOUNTS //
+    projectMembers.map(async(member) => await UserModel.findByIdAndUpdate(member, {$pull: {myProjects: projectId._id}}));
+
     res.status(200).json({
       userData: deletedProject,
       message: 'Delete was SUCCESSFUL!',

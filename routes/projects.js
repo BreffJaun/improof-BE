@@ -12,6 +12,8 @@ import {
 import {
   getProjects,
   addProject,
+  addStarProject,
+  deleteStarProject,
   getProject,
   updateProject,
   deleteProject
@@ -34,6 +36,14 @@ router
 router
   .route('/add')
     .post(projectValidator, validateRequest, addProject);
+
+router
+  .route('/starprojects/add')
+    .patch(addStarProject)
+
+router
+  .route('/starprojects/delete')
+    .delete(deleteStarProject)
 
 router
   .route('/:id')
