@@ -7,6 +7,7 @@ import sgMail from "@sendgrid/mail";
 // I M P O R T:  F U N C T I O N S
 import UserModel from "../models/userModel.js";
 import NotificationModel from "../models/notificationModel.js";
+import ProjectModel from "../models/projectModel.js"
 
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
@@ -364,13 +365,13 @@ export async function getUser(req, res, next) {
       err.statusCode = 422;
       throw err;
     }
-    const user = await UserModel.findById(req.params.id).populate(["starProjects", "notifications", "conversations", "follows", "starTalents"]).populate({
+    const user = await UserModel.findById(req.params.id).populate(["starProjects", "notifications", "conversations", "follows", "starTalents"]).populate([{
       path: "myProjects",
       populate: {
-        path:"team",
-        model: "ProjectModel"
+        path:"team",       
+        model: UserModel      
       }
-    });
+    }]);
     res.status(200).json({
       userData: user,
       message: "Search was SUCCESSFULL!",
