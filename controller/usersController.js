@@ -364,7 +364,7 @@ export async function getUser(req, res, next) {
       err.statusCode = 422;
       throw err;
     }
-    const user = await UserModel.findById(req.params.id).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents", "team"]);
+    const user = await UserModel.findById(req.params.id).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"]);
     res.status(200).json({
       userData: user,
       message: "Search was SUCCESSFULL!",
