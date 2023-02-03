@@ -209,7 +209,7 @@ export async function checkLogin(req, res, next) {
   try {
     const token = req.cookies.loginCookie;
     const tokenDecoded = jwt.verify(token, JWT_KEY);
-    const user = await UserModel.findById(tokenDecoded.userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"]);
+    const user = await UserModel.findById(tokenDecoded.userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
     console.log("Token in Cookie is valid. User is loggedin");
     res
       .status(200)
@@ -365,7 +365,7 @@ export async function getUser(req, res, next) {
       err.statusCode = 422;
       throw err;
     }
-    const user = await UserModel.findById(req.params.id).populate(["starProjects", "notifications", "conversations", "follows", "starTalents"]).populate([{
+    const user = await UserModel.findById(req.params.id).populate(["starProjects", "notifications", "conversations", "follows"]).populate([{
       path: "myProjects",
       populate: {
         path:"team",       
@@ -690,7 +690,7 @@ export async function updateUser(req, res, next) {
     // CHECK COLORTHEME END //
     // ** UPDATE META END ** //
     // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //
-    const updatedUser = await UserModel.findById(id);
+    const updatedUser = await UserModel.findById(id).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
     res.status(200).json({
       userData: updatedUser,
       message: "Update was SUCCESSFUL!",
@@ -781,7 +781,7 @@ export async function leadUser(req, res, next) {
     }
     // ADD FOLLOWED USER END //
 
-    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"])
+    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
 
     res.status(200).json({
       message: "Lead was SUCCESSFUL!",
@@ -807,7 +807,7 @@ export async function deleteUser(req, res, next) {
       err.statusCode = 401;
       throw err;
     }
-    const deletedUser = await UserModel.findByIdAndDelete(req.params.id);
+    const deletedUser = await UserModel.findByIdAndDelete(req.params.id).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
     res.status(200).json({
       userData: deletedUser,
       message: "Delete was SUCCESSFUL!",
