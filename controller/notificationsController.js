@@ -40,7 +40,8 @@ export async function deleteNotification(req, res, next) {
     res.status(200).json({
       message: 
         allNotifications ?
-        "DELETE of the COMPLETE notification was SUCCESSFULL!" : "DELETE of the notification ONLY from the user was SUCCESSFULL!",
+        "DELETE of the COMPLETE notification was SUCCESSFULL!" : 
+        "DELETE of the notification ONLY from the user was SUCCESSFULL!",
       status: true,
       data: "",
     });

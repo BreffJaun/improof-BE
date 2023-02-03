@@ -18,7 +18,10 @@ const FE_HOST = process.env.FE_HOST;
 
 //========================
 
-// ALL USERS (GET)
+//  L E G E N D
+//  (N) = CONTROLLER WITH A NOTIFICATION
+
+// ALL USERS (GET) 
 export async function getUsers(req, res, next) {
   try {
     res.json(await UserModel.find());
@@ -27,7 +30,7 @@ export async function getUsers(req, res, next) {
   }
 }
 
-// ADD USER (POST)
+// ADD USER (POST) (N)
 export async function addUser(req, res, next) {
   try {
     const newUser = req.body;
@@ -38,26 +41,29 @@ export async function addUser(req, res, next) {
       newUser.profile.lastName[0].toUpperCase();
     let createdUser;
     if (newUser.profile.isTalent) {
-      createdUser = await UserModel.create({
-        ...newUser,
-        profile: {
-          ...newUser.profile,
-          password: hashedPassword,
-          isTalent: true,
-          initials: initials,
-        },
+      createdUser = await UserModel.create({...newUser,
+        profile: {...newUser.profile, password: hashedPassword, isTalent: true, initials: initials},
       });
+      // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
+    const newNotification = await NotificationModel.create({
+      receiver: userId,
+      notText: `Fill out your profile to be found better by recruiters or other talents!`
+    });
+    const updatedFollowUser = await UserModel.findByIdAndUpdate(userId, {$push: {notifications: newNotification._id}});
+    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
+
     }
     if (newUser.profile.isRecruiter) {
-      createdUser = await UserModel.create({
-        ...newUser,
-        profile: {
-          ...newUser.profile,
-          password: hashedPassword,
-          isRecruiter: true,
-          initials: initials,
-        },
+      createdUser = await UserModel.create({...newUser,
+        profile: {...newUser.profile, password: hashedPassword, isRecruiter: true, initials: initials},
       });
+      // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
+    const newNotification = await NotificationModel.create({
+      receiver: userId,
+      notText: `Fill out your profile to give Talents a better impression of you!`
+    });
+    const updatedFollowUser = await UserModel.findByIdAndUpdate(follUserId, {$push: {notifications: newNotification._id}});
+    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
     }
 
     // VERIFY EMAIL IMPLEMENT BEGIN //
@@ -702,7 +708,7 @@ export async function updateUser(req, res, next) {
   }
 }
 
-// FOLLOW A USER / STARTALENT (PATCH)
+// FOLLOW A USER / STARTALENT (PATCH) (N)
 export async function followUser(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES //
@@ -763,11 +769,11 @@ export async function leadUser(req, res, next) {
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START//
-    // if (userId !== req.token.userId) {
-    //   const err = new Error("Not Authorized!");
-    //   err.statusCode = 401;
-    //   throw err;
-    // }
+    if (userId !== req.token.userId) {
+      const err = new Error("Not Authorized!");
+      err.statusCode = 401;
+      throw err;
+    }
     // CHECK IF AUTHORIZED END//
 
     // ADD FOLLOWED USER START //

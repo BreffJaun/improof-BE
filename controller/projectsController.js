@@ -19,6 +19,9 @@ const FE_HOST = process.env.FE_HOST;
 
 //========================
 
+//  L E G E N D
+//  (N) = CONTROLLER WITH A NOTIFICATION
+
 // ALL PROJECTS (GET)
 export async function getProjects(req, res, next) {
   try {
@@ -28,10 +31,10 @@ export async function getProjects(req, res, next) {
   }
 }
 
-// CREATE PROJECT (POST)
+// CREATE PROJECT (POST) (N)
 export async function addProject(req, res, next) {
   try {
-    // TAKE USERID
+    // TAKE USER DATA
     const userId = req.body.userId;
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
@@ -59,13 +62,14 @@ export async function addProject(req, res, next) {
     // ADD PROJECT TO EVERY TEAMMEMBER
     await teamMemberIds.map((member) => UserModel.findByIdAndUpdate(member, {$push: {myProjects: newProject._id}}));
 
-    // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS
+    // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS START //
     const filteredMemberIds = teamMemberIds.filter((member) => member === userId);
     const newNotification = await NotificationModel.create({
       receiver: filteredMemberIds,
       notText: `${userName} created a new Project and added you to the team!`
     });
     filteredMemberIds.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+    // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS END //
 
     // INVITE EMAIL IMPLEMENT BEGIN //
     const usersToInvite = newProject.inviteOthers;
@@ -131,7 +135,7 @@ export async function getProject(req, res, next) {
   }
 };
 
-// UPDATE A PROJECT (PATCH)
+// UPDATE A PROJECT (PATCH) (N)
 export async function updateProject(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES START//
@@ -208,13 +212,14 @@ export async function updateProject(req, res, next) {
       const newTeam = newData.team;
       const oldTeam = oldProjectData.team;
       const checkNewMembers = newTeam.filter((member) => !(oldTeam.includes(member)));
+      // CREATE NOTIFICATION FOR NEW PROJECT MEMBERS START //
       if(checkNewMembers.length > 0) {
         const newNotification = await NotificationModel.create({
           receiver: checkNewMembers,
           notText: `${userName} added you to the team of the Project "${oldProjectData.name}"!`
         });
         checkNewMembers.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
-  
+      // CREATE NOTIFICATION FOR NEW PROJECT MEMBERS START //
         const project = await ProjectModel.findByIdAndUpdate(projectId, 
           {team: newTeam}, {new: true});
         oldProjectData = project;

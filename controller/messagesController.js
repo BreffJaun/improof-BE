@@ -34,6 +34,7 @@ export async function messagesGetAll(req, res, next) {
   }
 }
 
+// ADD A MESSAGE
 export async function addMessage(req, res, next) {
   try {
     // TAKE USERID
