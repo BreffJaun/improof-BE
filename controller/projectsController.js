@@ -65,7 +65,7 @@ export async function addProject(req, res, next) {
       receiver: filteredMemberIds,
       notText: `${userName} created a new Project and added you to the team!`
     });
-    await filteredMemberIds.map((member) => UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+    filteredMemberIds.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
 
     // INVITE EMAIL IMPLEMENT BEGIN //
     const usersToInvite = newProject.inviteOthers;
@@ -288,7 +288,7 @@ export async function deleteProject(req, res, next) {
     // DEFINE NEEDED VARIABLES END //
 
     // IMPORTANT: A additionally check (after auth) if the given id is identic to one of them in the project. We do that, because we want that the user could only delete projects on which he is involved.
-    
+
     // CHECK IF AUTHORIZED (PROJECT IN USER) START //
     if (!(projectMembers.includes(userId))) {
       const err = new Error("Not Authorized to DELETE the Project!");
@@ -302,7 +302,7 @@ export async function deleteProject(req, res, next) {
       receiver: projectMembers,
       notText: `${userName} deleted the Project "${oldProject.name}"!`
     });
-    await projectMembers.map((member) => UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+    projectMembers.map(async(member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
     // CREATE NOTIFICATION FOR ALL PROJECT MEMBERS END //
 
     const deletedProject = await ProjectModel.findByIdAndDelete(req.params.id).populate(["team", "stones"]);

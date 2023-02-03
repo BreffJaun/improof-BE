@@ -7,11 +7,12 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
 // I M P O R T:  R O U T E S
-import userRouter from "./routes/users.js";;
+import userRouter from "./routes/users.js";
 import projectRouter from './routes/projects.js';
-import wrongRoutes from "./routes/wrongPath.js";
+import notificationRouter from './routes/notifications.js';
 import messageRouter from "./routes/messages.js";
 import conversationRouter from "./routes/conversations.js";
+import wrongRoutes from "./routes/wrongPath.js";
 
 // I M P O R T:  E R R O R  H A N D L E R
 import { errorHandler } from "./middleware/errorhandler.js";
@@ -62,6 +63,9 @@ app.use("/users", userRouter);
 
 // PROJECT
 app.use('/projects', projectRouter);
+
+// NOTIFICATIONS
+app.use('/notifications', notificationRouter);
 
 // CONVERSATIONS
 app.use("/conversations", conversationRouter);
