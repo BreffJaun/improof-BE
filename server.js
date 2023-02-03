@@ -12,6 +12,8 @@ import userRouter from "./routes/users.js";
 import wrongRoutes from "./routes/wrongPath.js";
 import messageRouter from "./routes/messages.js";
 import conversationRouter from "./routes/conversations.js";
+import stoneRouter from "./routes/stones.js";
+import projectRouter from "./routes/projects.js";
 
 // I M P O R T:  E R R O R  H A N D L E R
 import { errorHandler } from "./middleware/errorhandler.js";
@@ -65,6 +67,12 @@ app.use("/conversations", conversationRouter);
 
 // MESSAGES
 app.use("/messages", messageRouter);
+
+// STONES
+app.use("/stones", stoneRouter);
+
+// PROJECTS
+app.use("/projects", projectRouter);
 
 // ERROR HANDLER
 app.use(errorHandler);

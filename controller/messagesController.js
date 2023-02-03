@@ -22,8 +22,6 @@ export async function messagesGetAll(req, res, next) {
       conversationId
     ).populate("message");
     const allMessages = conversation.message;
-    console.log(allMessages);
-    // console.log(conversation);
     res.json({
       message: allMessages,
       status: true,
