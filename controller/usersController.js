@@ -165,6 +165,7 @@ export async function login(req, res, next) {
           loginCount: loginCount + 1,
           firstLogin: false,
         },
+        // FILL IN A NOTIFICATION
       });
     }
     // FIRST LOGIN CHECK END //
@@ -687,6 +688,98 @@ export async function updateUser(req, res, next) {
       message: "Update was SUCCESSFUL!",
       status: true,
       data: "",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// FOLLOW A USER / STARTALENT (PATCH)
+export async function followUser(req, res, next) {
+  try {
+    // DEFINE NEEDED VARIABLES //
+    const userId = req.body.userId;
+    const follUserId = req.body.follUserId;
+    const user = await UserModel.findById(userId);
+    const isTalent = req.body.isTalent;
+    const isRecruiter = req.body.isRecruiter;
+    // DEFINE NEEDED VARIABLES //
+
+    // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
+    // CHECK IF AUTHORIZED START//
+    if (userId !== req.token.userId) {
+      const err = new Error("Not Authorized!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // CHECK IF AUTHORIZED END//
+
+    // ADD FOLLOWED USER START //
+    if (isTalent && !user.follows.includes(follUserId)) {
+      const user = await UserModel.findByIdAndUpdate(userId, 
+        {$push: {follows: follUserId}}, { new: true });
+    } else if (isRecruiter && !user.starTalents.includes(follUserId)) {
+      const user = await UserModel.findByIdAndUpdate(userId, 
+        {$push: {starTalents: follUserId}}, { new: true });      
+    } else {
+      const err = new Error("You already follow this talent!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // ADD FOLLOWED USER END //
+
+    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"])
+
+    res.status(200).json({
+      message: "Follow was SUCCESSFUL!",
+      status: true,
+      data: updatedUser,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// LEAD A USER / STARTALENT (DELETE)
+export async function leadUser(req, res, next) {
+  try {
+    // DEFINE NEEDED VARIABLES //
+    const userId = req.body.userId;
+    const follUserId = req.body.follUserId;
+    const user = await UserModel.findById(userId);
+    const isTalent = req.body.isTalent;
+    const isRecruiter = req.body.isRecruiter;
+    // DEFINE NEEDED VARIABLES //
+
+    // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
+    // CHECK IF AUTHORIZED START//
+    if (userId !== req.token.userId) {
+      const err = new Error("Not Authorized!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // CHECK IF AUTHORIZED END//
+
+    // ADD FOLLOWED USER START //
+    if (isTalent && user.follows.includes(follUserId)) {
+      const user = await UserModel.findByIdAndUpdate(userId, 
+        {$pull: {follows: follUserId}}, { new: true });
+    } else if (isRecruiter && user.starTalents.includes(follUserId)) {
+      const user = await UserModel.findByIdAndUpdate(userId, 
+        {$pull: {starTalents: follUserId}}, { new: true });      
+    } else {
+      const err = new Error("You don't follow this talent!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // ADD FOLLOWED USER END //
+
+    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"])
+
+    res.status(200).json({
+      message: "Lead was SUCCESSFUL!",
+      status: true,
+      data: updatedUser,
     });
   } catch (err) {
     next(err);

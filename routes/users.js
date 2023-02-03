@@ -23,6 +23,8 @@ import {
   verifyEmail,
   forgotPassword,
   verifyResetToken,
+  followUser,
+  leadUser,
   setNewPassword
 } from '../controller/usersController.js';
 
@@ -32,7 +34,7 @@ import { get } from 'mongoose';
 // ========================
 
 // D E F I N E   M U L T E R   I N S T A N C E
-const upload = multer({dest: "uploads/"});
+const upload = multer({dest: 'uploads/'});
 
 // C R E A T E   R O U T E S
 const router = express.Router();
@@ -65,12 +67,20 @@ router
     .post(forgotPassword)
 
 router
-  .route("/reset/:token")
+  .route('/reset/:token')
     .get(verifyResetToken);
-
+    
 router
   .route('/setnewpassword')
     .post(setNewPassword)
+    
+router
+  .route('/follow/add')
+    .patch(followUser)
+
+router
+  .route('/follow/delete')
+    .delete(leadUser)
 
 router
   .route('/:id')
