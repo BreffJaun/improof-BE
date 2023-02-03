@@ -106,7 +106,7 @@ export async function addProject(req, res, next) {
     res.status(201).json({
       message: "Project SUCCESSFULLY added!", 
       status: true,
-      data: newProject
+      data: populatedProject
     })
     } catch (err) {
       next(err);
