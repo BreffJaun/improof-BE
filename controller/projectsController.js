@@ -125,6 +125,19 @@ export async function addStarProject(req, res, next) {
     const projectMembers = project.team
 
     // ADD PROJECT TO STARPROJECTS
+    if (isTalent && !user.follows.includes(follUserId)) {
+      const user = await UserModel.findByIdAndUpdate(userId, 
+        {$push: {follows: follUserId}}, { new: true });
+    } else if (isRecruiter && !user.starTalents.includes(follUserId)) {
+      const user = await UserModel.findByIdAndUpdate(userId, 
+        {$push: {starTalents: follUserId}}, { new: true });      
+    } else {
+      const err = new Error("You already follow this talent!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // ADD FOLLOWED USER END //
+
     const updatedUser =  await UserModel.findByIdAndUpdate(userId, {$push: {starProjects: projectId}}, {new: true});
 
     const user = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"]);
