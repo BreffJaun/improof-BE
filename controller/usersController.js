@@ -6,6 +6,7 @@ import sgMail from "@sendgrid/mail";
 
 // I M P O R T:  F U N C T I O N S
 import UserModel from "../models/userModel.js";
+import NotificationModel from "../models/notificationModel.js";
 
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
@@ -701,17 +702,18 @@ export async function followUser(req, res, next) {
     const userId = req.body.userId;
     const follUserId = req.body.follUserId;
     const user = await UserModel.findById(userId);
+    const userName = user.profile.firstName + " " + user.profile.lastName;
     const isTalent = req.body.isTalent;
     const isRecruiter = req.body.isRecruiter;
     // DEFINE NEEDED VARIABLES //
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START//
-    if (userId !== req.token.userId) {
-      const err = new Error("Not Authorized!");
-      err.statusCode = 401;
-      throw err;
-    }
+    // if (userId !== req.token.userId) {
+    //   const err = new Error("Not Authorized!");
+    //   err.statusCode = 401;
+    //   throw err;
+    // }
     // CHECK IF AUTHORIZED END//
 
     // ADD FOLLOWED USER START //
@@ -727,6 +729,14 @@ export async function followUser(req, res, next) {
       throw err;
     }
     // ADD FOLLOWED USER END //
+
+    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
+    const newNotification = await NotificationModel.create({
+      receiver: follUserId,
+      notText: `${userName} follows you from now on!`
+    });
+    const updatedFollowUser = await UserModel.findByIdAndUpdate(follUserId, {$push: {notifications: newNotification._id}});
+    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
 
     const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows", "starTalents"])
 
