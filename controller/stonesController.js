@@ -16,7 +16,7 @@ export async function getStones(req, res, next) {
     const project = await ProjectModel.findById(projectId).populate("stones");
     const allStones = project.stones;
     res.status(200).json({
-      message: allStones,
+      message: "All stones SUCCESS!",
       status: true,
       data: allStones,
     });
@@ -33,7 +33,7 @@ export async function getOneStone(req, res, next) {
     const stoneId = req.params.stoneId;
     const stone = await StoneModel.findById(stoneId).populate("contributors");
     res.status(200).json({
-      message: stone,
+      message: "A specific stone SUCCESS!",
       status: true,
       data: stone,
     });
@@ -51,6 +51,7 @@ export async function addStone(req, res, next) {
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
     const team = project.team;
+    const restOfTheTeam = team.filter((member) => member.toString() !== userId);
 
     if (!team.includes(userId)) {
       const error = new Error(
@@ -73,6 +74,13 @@ export async function addStone(req, res, next) {
           ? `${userName} added a new milestone to your ~${project.name}~ project`
           : `** ${userName} added the endstone to your ~${project.name}~ project **`,
     });
+    restOfTheTeam.map(
+      async (member) =>
+        await UserModel.findByIdAndUpdate(member, {
+          $push: { notifications: notification._id },
+        })
+    );
+
     const notMessage = 41 + project.name.length + userName.length;
     res.status(201).json({
       message: notification.notText.slice(-notMessage),
@@ -93,7 +101,8 @@ export async function updateStone(req, res, next) {
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
     const team = project.team;
-    const restOfTheTeam = team.filter((member) => member !== userId);
+    console.log('Team: ', team);
+    const restOfTheTeam = team.filter((member) => member.toString() !== userId);
     
     if (!team.includes(userId)) {
       const error = new Error(
@@ -140,7 +149,7 @@ export async function deleteStone(req, res, next) {
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
     const team = project.team;
-    const restOfTheTeam = team.filter((member) => member === userId);
+    const restOfTheTeam = team.filter((member) => member.toString() !== userId);
 
     if (!team.includes(userId)) {
       const error = new Error(
