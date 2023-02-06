@@ -21,12 +21,38 @@ export async function messagesGetAll(req, res, next) {
     const conversation = await ConversationModel.findById(
       conversationId
     ).populate("message");
+    const userId = req.body.userId;
+    const receivedMessages = req.body.receivedMessages;
+    const notReadMessages = req.body.notReadMessages;
+
+    let receivedAndNotRead = receivedMessages.filter(
+      (x) => notReadMessages.indexOf(x) !== -1
+    );
+    receivedAndNotRead.map(
+      async (message) =>
+        await MessageModel.findByIdAndUpdate(message.toString(), {
+          ...message,
+          isRead: true,
+        })
+    );
+
+    console.log("received:", receivedMessages);
+    console.log("not read:", notReadMessages);
+    console.log("received and not read:", receivedAndNotRead);
+
     const allMessages = conversation.message;
     res.json({
-      message: allMessages,
+      message: "success",
       status: true,
-      data: "",
+      data: allMessages,
     });
+  } catch (error) {
+    next(error);
+  }
+}
+export async function readMessages(req, res, next) {
+  try {
+    const userId = req.body.userId;
   } catch (error) {
     next(error);
   }

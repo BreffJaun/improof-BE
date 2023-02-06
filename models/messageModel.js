@@ -6,6 +6,7 @@ const messageSchema = new Schema(
   {
     from: { type: Schema.Types.ObjectId }, // Falls nicht geht, type: String
     text: { type: String, required: true },
+    isRead: { type: Boolean, default: false },
   },
   { strictQuery: true },
   { timeStamps: true }
