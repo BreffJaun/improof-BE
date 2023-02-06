@@ -93,8 +93,8 @@ export async function updateStone(req, res, next) {
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
     const team = project.team;
-    const restOfTheTeam = team.filter((member) => !member.includes(userId));
-
+    const restOfTheTeam = team.filter((member) => member !== userId);
+    
     if (!team.includes(userId)) {
       const error = new Error(
         "You are not an authorized user to edit the stones of this project "
