@@ -60,10 +60,10 @@ export async function addProject(req, res, next) {
     // AVATAR IMPLEMENT END //
 
     // ADD PROJECT TO EVERY TEAMMEMBER
-    await teamMemberIds.map((member) => UserModel.findByIdAndUpdate(member, {$push: {myProjects: newProject._id}}));
+    teamMemberIds.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {myProjects: newProject._id}}));
 
     // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS START //
-    const filteredMemberIds = teamMemberIds.filter((member) => member === userId);
+    const filteredMemberIds = teamMemberIds.filter((member) => member !== userId);
     const newNotification = await NotificationModel.create({
       receiver: filteredMemberIds,
       notText: `${userName} created a new Project and added you to the team!`
