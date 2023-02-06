@@ -64,11 +64,13 @@ export async function addProject(req, res, next) {
 
     // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS START //
     const filteredMemberIds = teamMemberIds.filter((member) => member !== userId);
-    const newNotification = await NotificationModel.create({
-      receiver: filteredMemberIds,
-      notText: `${userName} created a new Project and added you to the team!`
-    });
-    filteredMemberIds.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+    filteredMemberIds.map(async (member) => {
+      const newNotification = await NotificationModel.create({
+        receiver: member,
+        notText: `${userName} created a new Project and added you to the team!`
+      })
+      await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
+    })
     // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS END //
 
     // INVITE EMAIL IMPLEMENT BEGIN //
@@ -132,11 +134,11 @@ export async function followProject(req, res, next) {
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START//
-    // if (userId !== req.token.userId) {
-    //   const err = new Error("Not Authorized FOLLOW!");
-    //   err.statusCode = 401;
-    //   throw err;
-    // }
+    if (userId !== req.token.userId) {
+      const err = new Error("Not Authorized FOLLOW!");
+      err.statusCode = 401;
+      throw err;
+    }
     // CHECK IF AUTHORIZED END//
 
     // ADD FOLLOWED PROJECT START //
@@ -152,20 +154,22 @@ export async function followProject(req, res, next) {
 
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
     if(isRecruiter) {
-      const newNotification = await NotificationModel.create({
-        receiver: projectMembers,
-        notText: `A recruiter follows from now on your project "${projectName}"! Could be worse for you 😎`
-      });
-      projectMembers.map(async (member) => await UserModel.findByIdAndUpdate
-      (member, {$push: {notifications: newNotification._id}}));
+      projectMembers.map(async (member) => {
+        const newNotification = await NotificationModel.create({
+          receiver: member,
+          notText: `A recruiter follows from now on your project "${projectName}"! Could be worse for you 😎`
+        })
+        await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
+      })
     }
     if(isTalent) {
-      const newNotification = await NotificationModel.create({
-        receiver: projectMembers,
-        notText: `${userName} follows from now on your project "${projectName}"! Keep it up 🥳`
-      });
-      projectMembers.map(async (member) => await UserModel.findByIdAndUpdate
-      (member, {$push: {notifications: newNotification._id}}));
+      projectMembers.map(async (member) => {
+        const newNotification = await NotificationModel.create({
+          receiver: member,
+          notText: `${userName} follows from now on your project "${projectName}"! Keep it up 🥳`
+        })
+        await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
+      })
     }
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
 
@@ -193,11 +197,11 @@ export async function leadProject(req, res, next) {
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START //
-    // if (userId !== req.token.userId) {
-    //   const err = new Error("Not Authorized!");
-    //   err.statusCode = 401;
-    //   throw err;
-    // }
+    if (userId !== req.token.userId) {
+      const err = new Error("Not Authorized!");
+      err.statusCode = 401;
+      throw err;
+    }
     // CHECK IF AUTHORIZED END //
 
     // LEAD FOLLOWED PROJECT START //
@@ -319,15 +323,50 @@ export async function updateProject(req, res, next) {
     if(newData.team) {
       const newTeam = newData.team;
       const oldTeam = oldProjectData.team;
+      const oldTeamWithoutCurrUser = oldTeam.filter((member) => member !== userId)
       const checkNewMembers = newTeam.filter((member) => !(oldTeam.includes(member)));
-      // CREATE NOTIFICATION FOR NEW PROJECT MEMBERS START //
+      
+      // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION START //
       if(checkNewMembers.length > 0) {
-        const newNotification = await NotificationModel.create({
-          receiver: checkNewMembers,
-          notText: `${userName} added you to the team of the Project "${oldProjectData.name}"!`
-        });
-        checkNewMembers.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
-      // CREATE NOTIFICATION FOR NEW PROJECT MEMBERS START //
+        // PUSH PROJECT ID IN NEW MEMBER //
+        checkNewMembers.map(async (member) => {
+          await UserModel.findByIdAndUpdate(member, {$push: {
+            myProjects: projectId}})
+        })
+        // CREATE NOTIFICATION FOR NEW MEMBERS
+        checkNewMembers.map(async (member) => {
+          const newMember = await UserModel.findById(member);
+          const newMemberName = newMember.profile.firstName + " " + newMember.profile.lastName;
+          const newNotification = await NotificationModel.create({
+            receiver: member,
+            notText: `${userName} added you to the team of the Project "${oldProjectData.name}"!`
+          })
+          await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
+          console.log("CREATE NOTIFICATION FOR NEW MEMBERS");
+        })
+        // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION END //
+        // CREATE NOT. FOR OLD MEMBERS WITHOUT CURR USER START //
+        oldTeamWithoutCurrUser.map(async (member) => {
+          console.log("CREATE NOT. FOR OLD MEMBERS WITHOUT 1");
+          const newMemberNameArr = [];
+          checkNewMembers.map(async(member) => {
+            const newMember = await UserModel.findById(member);
+            const newMemberName = newMember.profile.firstName + " " + newMember.profile.lastName;
+            newMemberNameArr.push(newMemberName);
+            console.log("CREATE NOT. FOR OLD MEMBERS WITHOUT 2");
+          })
+          newMemberNameArr.map(async(name) => {
+            const newNotification = await NotificationModel.create({
+              receiver: member,
+              notText: `${userName} added ${name} to the team of the Project "${oldProjectData.name}"!`
+            })
+            await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
+            console.log("CREATE NOT. FOR OLD MEMBERS WITHOUT 3");
+          })
+        })
+        // CREATE NOT. FOR OLD MEMBERS WITHOUT CURR USER END //
+        
+
         const project = await ProjectModel.findByIdAndUpdate(projectId, 
           {team: newTeam}, {new: true});
         oldProjectData = project;
@@ -409,13 +448,15 @@ export async function deleteProject(req, res, next) {
       throw err;
     }
     // CHECK IF AUTHORIZED (PROJECT IN USER) END //
-    
+
     // CREATE NOTIFICATION FOR ALL PROJECT MEMBERS START //
-    const newNotification = await NotificationModel.create({
-      receiver: projectMembers,
-      notText: `${userName} deleted the Project "${oldProject.name}"!`
-    });
-    projectMembers.map(async(member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));
+    projectMembers.map(async (member) => {
+      const newNotification = await NotificationModel.create({
+        receiver: member,
+        notText: `${userName} deleted the Project "${oldProject.name}"!`
+      })
+      await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
+    })
     // CREATE NOTIFICATION FOR ALL PROJECT MEMBERS END //
 
     const deletedProject = await ProjectModel.findByIdAndDelete(req.params.id).populate(["team", "stones"]);
@@ -430,3 +471,10 @@ export async function deleteProject(req, res, next) {
   }
 }
 
+
+
+// const newNotification = await NotificationModel.create({
+    //   receiver: filteredMemberIds,
+    //   notText: `${userName} created a new Project and added you to the team!`
+    // });
+    // filteredMemberIds.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));

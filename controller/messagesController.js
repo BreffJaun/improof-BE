@@ -134,3 +134,16 @@ export async function deleteMessage(req, res, next) {
     next(error);
   }
 }
+
+
+export async function readMessages(req, res, next) {
+  try {
+    const userId = req.body.userId;
+    const unreadMessages = req.body.unreadMessages; // Array;
+
+    unreadMessages.map(async (mess) => await MessageModel.findByIdAndUpdate(mess, {...alterWert, isRead: true}));
+
+  } catch (error) {
+    next(error);
+  }
+}

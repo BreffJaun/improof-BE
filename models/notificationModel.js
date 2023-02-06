@@ -4,7 +4,8 @@ import {Schema, model} from "mongoose";
 // S C H E M A  -  D A T A   S T R U C T U R E
 const notificationSchema = new Schema({
   receiver: [{type: Schema.Types.ObjectId, ref: "User"}],
-  notText: {type: String}
+  notText: {type: String},
+  isRead: {type: Boolean, default: false},
 }
 , 
 {strictQuery: true},

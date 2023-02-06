@@ -49,7 +49,7 @@ export async function addUser(req, res, next) {
       receiver: userId,
       notText: `Fill out your profile to be found better by recruiters or other talents!`
     });
-    const updatedFollowUser = await UserModel.findByIdAndUpdate(userId, {$push: {notifications: newNotification._id}});
+    const updatedUser = await UserModel.findByIdAndUpdate(userId, {$push: {notifications: newNotification._id}});
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
 
     }
@@ -62,7 +62,7 @@ export async function addUser(req, res, next) {
       receiver: userId,
       notText: `Fill out your profile to give Talents a better impression of you!`
     });
-    const updatedFollowUser = await UserModel.findByIdAndUpdate(follUserId, {$push: {notifications: newNotification._id}});
+    const updatedUser = await UserModel.findByIdAndUpdate(follUserId, {$push: {notifications: newNotification._id}});
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
     }
 
