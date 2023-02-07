@@ -13,7 +13,7 @@ const userSchema = new Schema(
       description: { type: String, default: "" },
       goal: { type: String, default: "" },
       position: { type: String, default: "" },
-      category: {type: String, default: ""},
+      category: { type: String, default: "" },
       initials: { type: String, default: "" },
       // TALENT
       toolsAndSkills: { type: String, default: "" },
@@ -53,7 +53,7 @@ const userSchema = new Schema(
     follows: [{ type: Schema.Types.ObjectId, ref: "User" }],
   },
   { strictQuery: true },
-  { timeStamps: true }
+  { timestamps: true }
 );
 
 // M O D E L - T E M P L A T E   F O R   D B   E N T R I E S
