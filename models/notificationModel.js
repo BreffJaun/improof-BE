@@ -2,14 +2,14 @@
 import { Schema, model } from "mongoose";
 
 // S C H E M A  -  D A T A   S T R U C T U R E
-const notificationSchema = new Schema(
-  {
-    receiver: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    notText: { type: String },
-  },
-  { strictQuery: true },
-  { timeStamps: true }
-);
+const notificationSchema = new Schema({
+  receiver: [{type: Schema.Types.ObjectId, ref: "User"}],
+  notText: {type: String},
+  isRead: {type: Boolean, default: false},
+}
+, 
+{strictQuery: true},
+{timeStamps: true});
 
 // M O D E L - T E M P L A T E F O R D B E N T R I E S
 const NotificationModel = model(

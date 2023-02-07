@@ -7,6 +7,7 @@ import multer from "multer";
 
 // I M P O R T:  C O N T R O L L E R
 import {
+  readNotification,
   deleteNotification
 } from "../controller/notificationsController.js";
 
@@ -20,6 +21,10 @@ const upload = multer({ dest: "uploads/" });
 
 // C R E A T E   R O U T E S
 const router = express.Router();
+
+router
+  .route("/read")
+    .patch(auth, readNotification);
 
 router
   .route("/delete")
