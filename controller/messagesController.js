@@ -67,6 +67,7 @@ export async function readMessages(req, res, next) {
   }
 }
 
+// ADD A MESSAGE
 export async function addMessage(req, res, next) {
   try {
     // TAKE USERID

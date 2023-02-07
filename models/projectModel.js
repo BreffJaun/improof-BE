@@ -2,21 +2,20 @@
 import { Schema, model } from "mongoose";
 
 // S C H E M A  -  D A T A   S T R U C T U R E
-const projectSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    description: { type: String, required: true },
-    thumbnail: { type: String, default: "" },
-    color: { type: String, default: "bg-gO" },
-    category: { type: String, default: "" },
-    team: [{ type: Schema.Types.ObjectId, ref: "User" }],
-    inviteOthers: [{ type: String }],
-    private: { type: Boolean, default: false },
-    stones: [{ type: Schema.Types.ObjectId, ref: "Stone" }],
-  },
-  { strictQuery: true },
-  { timeStamps: true }
-);
+const projectSchema = new Schema({
+  name: {type: String, required: true},
+  description: {type: String, required: true},
+  thumbnail: {type: String, default: ""},
+  color: {type: String, default: "bg-gO"},
+  category: {type: String, default: ""},
+  team: [{type: Schema.Types.ObjectId, ref: "User"}],
+  inviteOthers: [{type: String}],
+  private: {type: Boolean, default: false},
+  stones: [{type: Schema.Types.ObjectId, ref: "Stone"}],
+}
+, 
+{strictQuery: true},
+{timeStamps: true});
 
 // M O D E L - T E M P L A T E   F O R   D B   E N T R I E S
 const ProjectModel = model("Project", projectSchema, "projects");

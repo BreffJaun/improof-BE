@@ -14,7 +14,6 @@ const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
 //========================
 
 // GET ALL CONVERSATIONS
-
 export async function conversationsGetAll(req, res, next) {
   try {
     // TAKE USERID

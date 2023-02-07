@@ -1,6 +1,15 @@
 // I M P O R T D E P E N D E N C I E S
 import { Schema, model } from "mongoose";
 
+// S C H E M A  -  D A T A   S T R U C T U R E
+const notificationSchema = new Schema(
+  {
+    receiver: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    notText: { type: String },
+  },
+  { strictQuery: true },
+  { timeStamps: true }
+);
 // S C H E M A - D A T A S T R U C T U R E
 const notificationSchema = new Schema(
   {

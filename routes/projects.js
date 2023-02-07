@@ -10,6 +10,8 @@ import { projectValidator } from "../middleware/projectValidator.js";
 import {
   getProjects,
   addProject,
+  followProject,
+  leadProject,
   getProject,
   updateProject,
   deleteProject,
@@ -29,6 +31,14 @@ router.route("/").get(getProjects);
 
 router.route("/add").post(projectValidator, validateRequest, addProject);
 
-router.route("/:id").get(getProject).patch(updateProject).delete(deleteProject);
+router.route("/follow/add").patch(auth, followProject);
+
+router.route("/follow/delete").delete(auth, leadProject);
+
+router
+  .route("/:id")
+  .get(auth, getProject)
+  .patch(auth, updateProject)
+  .delete(auth, deleteProject);
 
 export default router;

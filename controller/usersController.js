@@ -1,12 +1,13 @@
 // I M P O R T:  E X T E R N A L  D E P E N D E N C I E S
-import * as dotenv from "dotenv";
-dotenv.config();
+import * as dotenv from "dotenv"; dotenv.config();
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import sgMail from "@sendgrid/mail";
 
 // I M P O R T:  F U N C T I O N S
 import UserModel from "../models/userModel.js";
+import NotificationModel from "../models/notificationModel.js";
+import ProjectModel from "../models/projectModel.js"
 
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
@@ -17,7 +18,10 @@ const FE_HOST = process.env.FE_HOST;
 
 //========================
 
-// ALL USERS (GET)
+//  L E G E N D
+//  (N) = CONTROLLER WITH A NOTIFICATION
+
+// ALL USERS (GET) 
 export async function getUsers(req, res, next) {
   try {
     res.json(await UserModel.find());
@@ -26,7 +30,7 @@ export async function getUsers(req, res, next) {
   }
 }
 
-// ADD USER (POST)
+// ADD USER (POST) (N)
 export async function addUser(req, res, next) {
   try {
     const newUser = req.body;
@@ -37,26 +41,29 @@ export async function addUser(req, res, next) {
       newUser.profile.lastName[0].toUpperCase();
     let createdUser;
     if (newUser.profile.isTalent) {
-      createdUser = await UserModel.create({
-        ...newUser,
-        profile: {
-          ...newUser.profile,
-          password: hashedPassword,
-          isTalent: true,
-          initials: initials,
-        },
+      createdUser = await UserModel.create({...newUser,
+        profile: {...newUser.profile, password: hashedPassword, isTalent: true, initials: initials},
       });
+      // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
+    const newNotification = await NotificationModel.create({
+      receiver: userId,
+      notText: `Fill out your profile to be found better by recruiters or other talents!`
+    });
+    const updatedFollowUser = await UserModel.findByIdAndUpdate(userId, {$push: {notifications: newNotification._id}});
+    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
+
     }
     if (newUser.profile.isRecruiter) {
-      createdUser = await UserModel.create({
-        ...newUser,
-        profile: {
-          ...newUser.profile,
-          password: hashedPassword,
-          isRecruiter: true,
-          initials: initials,
-        },
+      createdUser = await UserModel.create({...newUser,
+        profile: {...newUser.profile, password: hashedPassword, isRecruiter: true, initials: initials},
       });
+      // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
+    const newNotification = await NotificationModel.create({
+      receiver: userId,
+      notText: `Fill out your profile to give Talents a better impression of you!`
+    });
+    const updatedFollowUser = await UserModel.findByIdAndUpdate(follUserId, {$push: {notifications: newNotification._id}});
+    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
     }
 
     // VERIFY EMAIL IMPLEMENT BEGIN //
@@ -166,6 +173,7 @@ export async function login(req, res, next) {
           loginCount: loginCount + 1,
           firstLogin: false,
         },
+        // FILL IN A NOTIFICATION
       });
     }
     // FIRST LOGIN CHECK END //
@@ -207,7 +215,7 @@ export async function checkLogin(req, res, next) {
   try {
     const token = req.cookies.loginCookie;
     const tokenDecoded = jwt.verify(token, JWT_KEY);
-    const user = await UserModel.findById(tokenDecoded.userId);
+    const user = await UserModel.findById(tokenDecoded.userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
     console.log("Token in Cookie is valid. User is loggedin");
     res
       .status(200)
@@ -221,6 +229,7 @@ export async function checkLogin(req, res, next) {
     next(err);
   }
 }
+
 // LOGOUT (GET)
 export async function logout(req, res, next) {
   try {
@@ -362,10 +371,16 @@ export async function getUser(req, res, next) {
       err.statusCode = 422;
       throw err;
     }
-    const user = await UserModel.findById(req.params.id);
+    const user = await UserModel.findById(req.params.id).populate(["starProjects", "notifications", "conversations", "follows"]).populate([{
+      path: "myProjects",
+      populate: {
+        path:"team",       
+        model: UserModel      
+      }
+    }]);
     res.status(200).json({
       userData: user,
-      message: "Search was SUCCESSFUL!",
+      message: "Search was SUCCESSFULL!",
       status: true,
       data: "",
     });
@@ -681,12 +696,103 @@ export async function updateUser(req, res, next) {
     // CHECK COLORTHEME END //
     // ** UPDATE META END ** //
     // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //
-    const updatedUser = await UserModel.findById(id);
+    const updatedUser = await UserModel.findById(id).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
     res.status(200).json({
       userData: updatedUser,
       message: "Update was SUCCESSFUL!",
       status: true,
       data: "",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// FOLLOW A USER / STARTALENT (PATCH) (N)
+export async function followUser(req, res, next) {
+  try {
+    // DEFINE NEEDED VARIABLES //
+    const userId = req.body.userId;
+    const follUserId = req.body.follUserId;
+    const user = await UserModel.findById(userId);
+    const userName = user.profile.firstName + " " + user.profile.lastName;
+    // DEFINE NEEDED VARIABLES //
+
+    // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
+    // CHECK IF AUTHORIZED START//
+    if (userId !== req.token.userId) {
+      const err = new Error("Not Authorized FOLLOW!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // CHECK IF AUTHORIZED END//
+
+    // ADD FOLLOWED USER START //
+    if (!user.follows.includes(follUserId)) {
+      const user = await UserModel.findByIdAndUpdate(userId, 
+        {$push: {follows: follUserId}}, { new: true });
+    } else {
+      const err = new Error("You already follow this talent!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // ADD FOLLOWED USER END //
+
+    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
+    const newNotification = await NotificationModel.create({
+      receiver: follUserId,
+      notText: `${userName} follows you from now on!`
+    });
+    const updatedFollowUser = await UserModel.findByIdAndUpdate(follUserId, {$push: {notifications: newNotification._id}});
+    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
+
+    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
+
+    res.status(200).json({
+      message: "Follow was SUCCESSFUL!",
+      status: true,
+      data: updatedUser,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// LEAD A USER / STARTALENT (DELETE)
+export async function leadUser(req, res, next) {
+  try {
+    // DEFINE NEEDED VARIABLES //
+    const userId = req.body.userId;
+    const follUserId = req.body.follUserId;
+    const user = await UserModel.findById(userId);
+    // DEFINE NEEDED VARIABLES //
+
+    // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
+    // CHECK IF AUTHORIZED START//
+    if (userId !== req.token.userId) {
+      const err = new Error("Not Authorized!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // CHECK IF AUTHORIZED END//
+
+    // LEAD FOLLOWED USER START //
+    if (user.follows.includes(follUserId)) {
+      const user = await UserModel.findByIdAndUpdate(userId, 
+        {$pull: {follows: follUserId}}, { new: true });
+    } else {
+      const err = new Error("You don't follow this talent!");
+      err.statusCode = 401;
+      throw err;
+    }
+    // LEAD FOLLOWED USER END //
+
+    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
+
+    res.status(200).json({
+      message: "Lead was SUCCESSFUL!",
+      status: true,
+      data: updatedUser,
     });
   } catch (err) {
     next(err);
@@ -707,7 +813,7 @@ export async function deleteUser(req, res, next) {
       err.statusCode = 401;
       throw err;
     }
-    const deletedUser = await UserModel.findByIdAndDelete(req.params.id);
+    const deletedUser = await UserModel.findByIdAndDelete(req.params.id).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
     res.status(200).json({
       userData: deletedUser,
       message: "Delete was SUCCESSFUL!",

@@ -9,9 +9,11 @@ import cookieParser from "cookie-parser";
 
 // I M P O R T:  R O U T E S
 import userRouter from "./routes/users.js";
-import wrongRoutes from "./routes/wrongPath.js";
+import projectRouter from "./routes/projects.js";
+import notificationRouter from "./routes/notifications.js";
 import messageRouter from "./routes/messages.js";
 import conversationRouter from "./routes/conversations.js";
+import wrongRoutes from "./routes/wrongPath.js";
 import stoneRouter from "./routes/stones.js";
 import projectRouter from "./routes/projects.js";
 
@@ -61,6 +63,12 @@ app.use(morgan("dev"));
 // ROUTER MIDDLEWARE
 // USERS
 app.use("/users", userRouter);
+
+// PROJECT
+app.use("/projects", projectRouter);
+
+// NOTIFICATIONS
+app.use("/notifications", notificationRouter);
 
 // CONVERSATIONS
 app.use("/conversations", conversationRouter);
