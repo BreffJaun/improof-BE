@@ -1,18 +1,19 @@
 // I M P O R T:  E X T E R N A L  D E P E N D E N C I E S
-import * as dotenv from "dotenv"; dotenv.config();
-import bcrypt from 'bcrypt';
+import * as dotenv from "dotenv";
+dotenv.config();
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import sgMail from '@sendgrid/mail';
+import sgMail from "@sendgrid/mail";
 
 // I M P O R T:  F U N C T I O N S
-import ProjectModel from '../models/projectModel.js';
+import ProjectModel from "../models/projectModel.js";
 import UserModel from "../models/userModel.js";
 import StoneModel from "../models/stoneModel.js";
 import NotificationModel from "../models/notificationModel.js";
 
-// I M P O R T  &  D E C L A R E   B C R Y P T   K E Y 
-const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue"
-const SENDGRID_KEY = process.env.SENDGRID_API_KEY 
+// I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
+const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
+const SENDGRID_KEY = process.env.SENDGRID_API_KEY;
 const SENDGRID_EMAIL = process.env.SENDGRID_EMAIL;
 const BE_HOST = process.env.BE_HOST;
 const FE_HOST = process.env.FE_HOST;
@@ -26,7 +27,7 @@ const FE_HOST = process.env.FE_HOST;
 export async function getProjects(req, res, next) {
   try {
     res.json(await ProjectModel.find().populate(["team", "stones"]));
-  }catch (err) {
+  } catch (err) {
     next(err);
   }
 }
@@ -60,23 +61,32 @@ export async function addProject(req, res, next) {
     // AVATAR IMPLEMENT END //
 
     // ADD PROJECT TO EVERY TEAMMEMBER
-    teamMemberIds.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {myProjects: newProject._id}}));
+    teamMemberIds.map(
+      async (member) =>
+        await UserModel.findByIdAndUpdate(member, {
+          $push: { myProjects: newProject._id },
+        })
+    );
 
     // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS START //
-    const filteredMemberIds = teamMemberIds.filter((member) => member !== userId);
+    const filteredMemberIds = teamMemberIds.filter(
+      (member) => member !== userId
+    );
     filteredMemberIds.map(async (member) => {
       const newNotification = await NotificationModel.create({
         receiver: member,
-        notText: `${userName} created a new Project and added you to the team!`
-      })
-      await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
-    })
+        notText: `${userName} created a new Project and added you to the team!`,
+      });
+      await UserModel.findByIdAndUpdate(member, {
+        $push: { notifications: newNotification._id },
+      });
+    });
     // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS END //
 
     // INVITE EMAIL IMPLEMENT BEGIN //
     const usersToInvite = newProject.inviteOthers;
-    sgMail.setApiKey(SENDGRID_KEY)
-    usersToInvite.map(async (member) => { 
+    sgMail.setApiKey(SENDGRID_KEY);
+    usersToInvite.map(async (member) => {
       const msg = {
         to: member, // Change to your recipient
         from: SENDGRID_EMAIL, // Change to your verified sender
@@ -86,7 +96,9 @@ export async function addProject(req, res, next) {
         <div>
         <p>Hi, </p>
 
-        <p>${user.profile.firstName + " " + user.profile.lastName} invited you to join the 'improof-community'.</p>
+        <p>${
+          user.profile.firstName + " " + user.profile.lastName
+        } invited you to join the 'improof-community'.</p>
 
         <p style="background-color: orange; border-radius: 7px; width: 120px; height: 30px; text-decoration: none;">
         Please register here
@@ -98,22 +110,25 @@ export async function addProject(req, res, next) {
         <p>Your 'improof' Team </p>
         
         <div>`,
-      }
-      const response = await sgMail.send(msg);    
-    })
+      };
+      const response = await sgMail.send(msg);
+    });
     // INVITE EMAIL IMPLEMENT END //
 
     // CLEAR INVITEOTHERS FROM PROJECT
-    await ProjectModel.findByIdAndUpdate(projectId, {...newProject, inviteOthers: newProject.inviteOthers.length = 0});
+    await ProjectModel.findByIdAndUpdate(projectId, {
+      ...newProject,
+      inviteOthers: (newProject.inviteOthers.length = 0),
+    });
 
     res.status(201).json({
-      message: "Project SUCCESSFULLY added!", 
+      message: "Project SUCCESSFULLY added!",
       status: true,
-      data: newProject
-    })
-    } catch (err) {
-      next(err);
-    }
+      data: newProject,
+    });
+  } catch (err) {
+    next(err);
+  }
 }
 
 // FOLLOW A PROJECT / STARPROJECT (PATCH) (N)
@@ -142,8 +157,11 @@ export async function followProject(req, res, next) {
 
     // ADD FOLLOWED PROJECT START //
     if (!user.starProjects.includes(projectId)) {
-      const user = await UserModel.findByIdAndUpdate(userId, 
-        {$push: {starProjects: projectId}}, { new: true });
+      const user = await UserModel.findByIdAndUpdate(
+        userId,
+        { $push: { starProjects: projectId } },
+        { new: true }
+      );
     } else {
       const err = new Error("You already follow this project!");
       err.statusCode = 401;
@@ -152,27 +170,37 @@ export async function followProject(req, res, next) {
     // ADD FOLLOWED USER END //
 
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
-    if(isRecruiter) {
+    if (isRecruiter) {
       projectMembers.map(async (member) => {
         const newNotification = await NotificationModel.create({
           receiver: member,
-          notText: `A recruiter follows from now on your project "${projectName}"! Could be worse for you 😎`
-        })
-        await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
-      })
+          notText: `A recruiter follows from now on your project "${projectName}"! Could be worse for you 😎`,
+        });
+        await UserModel.findByIdAndUpdate(member, {
+          $push: { notifications: newNotification._id },
+        });
+      });
     }
-    if(isTalent) {
+    if (isTalent) {
       projectMembers.map(async (member) => {
         const newNotification = await NotificationModel.create({
           receiver: member,
-          notText: `${userName} follows from now on your project "${projectName}"! Keep it up 🥳`
-        })
-        await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
-      })
+          notText: `${userName} follows from now on your project "${projectName}"! Keep it up 🥳`,
+        });
+        await UserModel.findByIdAndUpdate(member, {
+          $push: { notifications: newNotification._id },
+        });
+      });
     }
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
 
-    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
+    const updatedUser = await UserModel.findById(userId).populate([
+      "starProjects",
+      "myProjects",
+      "notifications",
+      "conversations",
+      "follows",
+    ]);
 
     res.status(200).json({
       message: "Follow was SUCCESSFUL!",
@@ -205,8 +233,11 @@ export async function leadProject(req, res, next) {
 
     // LEAD FOLLOWED PROJECT START //
     if (user.starProjects.includes(projectId)) {
-      const user = await UserModel.findByIdAndUpdate(userId, 
-        {$pull: {starProjects: projectId}}, { new: true });
+      const user = await UserModel.findByIdAndUpdate(
+        userId,
+        { $pull: { starProjects: projectId } },
+        { new: true }
+      );
     } else {
       const err = new Error("You don't follow this project!");
       err.statusCode = 401;
@@ -214,7 +245,13 @@ export async function leadProject(req, res, next) {
     }
     // LEAD FOLLOWED PROJECT END //
 
-    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
+    const updatedUser = await UserModel.findById(userId).populate([
+      "starProjects",
+      "myProjects",
+      "notifications",
+      "conversations",
+      "follows",
+    ]);
 
     res.status(200).json({
       message: "Lead was SUCCESSFUL!",
@@ -229,140 +266,177 @@ export async function leadProject(req, res, next) {
 // GET A PROJECT (GET)
 export async function getProject(req, res, next) {
   try {
-    const projectId = req.params.id
-    if (!(await ProjectModel.findById(projectId))){
+    const projectId = req.params.id;
+    if (!(await ProjectModel.findById(projectId))) {
       const err = new Error("No Project with this id in Database!");
       err.statusCode = 422;
-      throw err; 
-    } 
-    const project = await ProjectModel.findById(projectId).populate(["team", "stones"]);
+      throw err;
+    }
+    const project = await ProjectModel.findById(projectId)
+      .populate(["team"])
+      .populate({
+        path: "stones",
+        populate: {
+          path: "team",
+          model: UserModel,
+        },
+      });
     res.status(200).json({
-      message: 'Search was SUCCESSFUL!',
+      message: "Search was SUCCESSFUL!",
       status: true,
-      data: project
+      data: project,
     });
-  }catch (err) {
+  } catch (err) {
     next(err);
   }
-};
+}
 
 // UPDATE A PROJECT (PATCH) (N)
 export async function updateProject(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES START//
     // TAKE USERID
-    const userId = req.body.userId
+    const userId = req.body.userId;
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
 
     // TAKE PROJECT DATA
     const newData = req.body;
-    const projectId = req.params.id
+    const projectId = req.params.id;
     const project = await ProjectModel.findById(projectId);
     const projectMembers = project.team;
     let oldProjectData = await ProjectModel.findById(projectId);
     // DEFINE NEEDED VARIABLES END //
 
     // IMPORTANT: A additionally check (after auth) if the given id is identic to one of them in the project. We do that, because we want that the user could only change projects on which he is involved.
-    
+
     // CHECK IF AUTHORIZED (PROJECT IN USER) START //
-    if (!(projectMembers.includes(userId))) {
+    if (!projectMembers.includes(userId)) {
       const err = new Error("Not Authorized to UPDATE the Project!");
       err.statusCode = 401;
       throw err;
     }
     // CHECK IF AUTHORIZED (PROJECT IN USER) END //
-    
+
     // ## CHECK & UPDATE EVERY GIVEN PARAMETER START ## //
     // CHECK NAME START //
-    if(newData.name) {
+    if (newData.name) {
       const newName = newData.name;
-      const project = await ProjectModel.findByIdAndUpdate(projectId, 
-        {name: newName}, {new: true});
+      const project = await ProjectModel.findByIdAndUpdate(
+        projectId,
+        { name: newName },
+        { new: true }
+      );
       oldProjectData = project;
-    } 
+    }
     // CHECK NAME END //
 
     // CHECK DESCRIPTION START //
-    if(newData.description) {
+    if (newData.description) {
       const newDescription = newData.description;
-      const project = await ProjectModel.findByIdAndUpdate(projectId, 
-        {description: newDescription}, {new: true});
+      const project = await ProjectModel.findByIdAndUpdate(
+        projectId,
+        { description: newDescription },
+        { new: true }
+      );
       oldProjectData = project;
-    } 
+    }
     // CHECK DESCRIPTION END //
 
     // CHECK THUMBNAIL START //
     if (req.file) {
-      await ProjectModel.findByIdAndUpdate(projectId, 
-        {thumbnail: `${BE_HOST}/${req.file.path}`}, {new: true});
-        oldProjectData = project;
+      await ProjectModel.findByIdAndUpdate(
+        projectId,
+        { thumbnail: `${BE_HOST}/${req.file.path}` },
+        { new: true }
+      );
+      oldProjectData = project;
     }
     // CHECK THUMBNAIL END //
 
     // CHECK COLOR START //
-    if(newData.color) {
+    if (newData.color) {
       const newColor = newData.color;
-      const project = await ProjectModel.findByIdAndUpdate(projectId, 
-        {color: newColor}, {new: true});
+      const project = await ProjectModel.findByIdAndUpdate(
+        projectId,
+        { color: newColor },
+        { new: true }
+      );
       oldProjectData = project;
     }
     // CHECK COLOR END //
 
     // CHECK CATEGORY START //
-    if(newData.category) {
+    if (newData.category) {
       const newCategory = newData.category;
-      const project = await ProjectModel.findByIdAndUpdate(projectId, 
-        {category: newCategory}, {new: true});
+      const project = await ProjectModel.findByIdAndUpdate(
+        projectId,
+        { category: newCategory },
+        { new: true }
+      );
       oldProjectData = project;
     }
     // CHECK CATEGORY END //
 
     // CHECK TEAM START //
-    if(newData.team) {
+    if (newData.team) {
       const newTeam = newData.team;
-      const oldTeamObjId = oldProjectData.team
-      const oldTeam = oldTeamObjId.map((id) => id.toString())
-      const oldTeamWithoutCurrUser = oldTeam.filter((member) => member !== userId);
+      const oldTeamObjId = oldProjectData.team;
+      const oldTeam = oldTeamObjId.map((id) => id.toString());
+      const oldTeamWithoutCurrUser = oldTeam.filter(
+        (member) => member !== userId
+      );
       const newMemberNameArr = [];
 
-      const checkNewMembers = newTeam.filter((member) => !(oldTeam.includes(member)));
+      const checkNewMembers = newTeam.filter(
+        (member) => !oldTeam.includes(member)
+      );
       // console.log("checkNewMembers: " , checkNewMembers);
-      
+
       // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION START //
-      if(checkNewMembers.length > 0) {
+      if (checkNewMembers.length > 0) {
         checkNewMembers.forEach(async (member) => {
           const newMember = await UserModel.findById(member);
-          const newMemberName = newMember.profile.firstName + " " + newMember.profile.lastName;
-          // CREATE NOTIFICATION FOR NEW MEMBERS 
+          const newMemberName =
+            newMember.profile.firstName + " " + newMember.profile.lastName;
+          // CREATE NOTIFICATION FOR NEW MEMBERS
           const newNotification = await NotificationModel.create({
             receiver: member,
-            notText: `${userName} added you to the team of the Project "${oldProjectData.name}"!`
-          })
-          // CREATE NOTIFICATION FOR OLD MEMBERS 
-          await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id, myProjects: projectId}})
-          oldTeamWithoutCurrUser.forEach(async(oldMember) => {
-              const newNot = await NotificationModel.create({
+            notText: `${userName} added you to the team of the Project "${oldProjectData.name}"!`,
+          });
+          // CREATE NOTIFICATION FOR OLD MEMBERS
+          await UserModel.findByIdAndUpdate(member, {
+            $push: {
+              notifications: newNotification._id,
+              myProjects: projectId,
+            },
+          });
+          oldTeamWithoutCurrUser.forEach(async (oldMember) => {
+            const newNot = await NotificationModel.create({
               receiver: oldMember,
-              notText: `${userName} added ${newMemberName} to the team of the Project "${oldProjectData.name}"!`
-              })
-          await UserModel.findByIdAndUpdate(oldMember, {$push: {notifications: newNot._id}})
-
-          });       
-        })
+              notText: `${userName} added ${newMemberName} to the team of the Project "${oldProjectData.name}"!`,
+            });
+            await UserModel.findByIdAndUpdate(oldMember, {
+              $push: { notifications: newNot._id },
+            });
+          });
+        });
         // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION END //
-        const project = await ProjectModel.findByIdAndUpdate(projectId, 
-          {team: newTeam}, {new: true});
+        const project = await ProjectModel.findByIdAndUpdate(
+          projectId,
+          { team: newTeam },
+          { new: true }
+        );
         oldProjectData = project;
       }
     }
     // CHECK TEAM END //
 
     // CHECK INVITE OTHERS START //
-    if(newData.inviteOthers && newData.inviteOthers.length > 0) {
+    if (newData.inviteOthers && newData.inviteOthers.length > 0) {
       // INVITE EMAIL IMPLEMENT BEGIN //
       const usersToInvite = newData.inviteOthers;
-      sgMail.setApiKey(SENDGRID_KEY)
+      sgMail.setApiKey(SENDGRID_KEY);
       const msg = {
         bcc: usersToInvite, // Change to your recipient
         from: SENDGRID_EMAIL, // Change to your verified sender
@@ -372,7 +446,9 @@ export async function updateProject(req, res, next) {
         <div>
         <p>Hi, </p>
 
-        <p>${user.profile.firstName + " " + user.profile.lastName} invited you to join the 'improof-community'.</p>
+        <p>${
+          user.profile.firstName + " " + user.profile.lastName
+        } invited you to join the 'improof-community'.</p>
 
         <p style="background-color: orange; border-radius: 7px; width: 80px; height: 20px; text-decoration: none;">
         Please register here
@@ -384,9 +460,9 @@ export async function updateProject(req, res, next) {
         <p>Your 'improof' Team </p>
         
         <div>`,
-      }
+      };
       const response = await sgMail.send(msg);
-    // INVITE EMAIL IMPLEMENT END //
+      // INVITE EMAIL IMPLEMENT END //
     }
     // CHECK INVITE OTHERS END //
 
@@ -394,30 +470,33 @@ export async function updateProject(req, res, next) {
     // Stones will be created and edited on an other route with another controller!
     // CHECK STONES BEGIN //
 
-    // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //  
+    // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //
 
-    const updatedProject = await ProjectModel.findById(projectId).populate(["team", "stones"]);
+    const updatedProject = await ProjectModel.findById(projectId).populate([
+      "team",
+      "stones",
+    ]);
     res.status(200).json({
-      message: 'Update was SUCCESSFUL!',
+      message: "Update was SUCCESSFUL!",
       status: true,
-      data: updatedProject
+      data: updatedProject,
     });
-  }catch (err) {
+  } catch (err) {
     next(err);
   }
-};
+}
 
 // DELETE PROJECT
 export async function deleteProject(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES START//
     // TAKE USERID
-    const userId = req.body.userId
+    const userId = req.body.userId;
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
 
     // TAKE PROJECT DATA
-    const projectId = req.params.id
+    const projectId = req.params.id;
     const oldProject = await ProjectModel.findById(projectId);
     const projectMembers = oldProject.team;
     // DEFINE NEEDED VARIABLES END //
@@ -425,7 +504,7 @@ export async function deleteProject(req, res, next) {
     // IMPORTANT: A additionally check (after auth) if the given id is identic to one of them in the project. We do that, because we want that the user could only delete projects on which he is involved.
 
     // CHECK IF AUTHORIZED (PROJECT IN USER) START //
-    if (!(projectMembers.includes(userId))) {
+    if (!projectMembers.includes(userId)) {
       const err = new Error("Not Authorized to DELETE the Project!");
       err.statusCode = 401;
       throw err;
@@ -436,27 +515,34 @@ export async function deleteProject(req, res, next) {
     projectMembers.map(async (member) => {
       const newNotification = await NotificationModel.create({
         receiver: member,
-        notText: `${userName} deleted the Project "${oldProject.name}"!`
+        notText: `${userName} deleted the Project "${oldProject.name}"!`,
       });
-      await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}, $pull: {myProjects: projectId}})
-    })
+      await UserModel.findByIdAndUpdate(member, {
+        $push: { notifications: newNotification._id },
+        $pull: { myProjects: projectId },
+      });
+    });
     // CREATE NOTIFICATION FOR ALL PROJECT MEMBERS END //
 
     // DELETE PROJECT FROM ALL USERS START //
     const allUsers = await UserModel.find();
-    allUsers.map(async(user) => {
-      await UserModel.findByIdAndUpdate(user._id, {$pull: {starProjects: projectId}});
+    allUsers.map(async (user) => {
+      await UserModel.findByIdAndUpdate(user._id, {
+        $pull: { starProjects: projectId },
+      });
     });
     // DELETE PROJECT FROM ALL USERS START //
 
-    const deletedProject = await ProjectModel.findByIdAndDelete(req.params.id).populate(["team", "stones"]);
+    const deletedProject = await ProjectModel.findByIdAndDelete(
+      req.params.id
+    ).populate(["team", "stones"]);
     res.status(200).json({
       userData: deletedProject,
-      message: 'Delete was SUCCESSFUL!',
+      message: "Delete was SUCCESSFUL!",
       status: true,
-      data: ""
+      data: "",
     });
-  }catch (err) {
+  } catch (err) {
     next(err);
   }
 }
