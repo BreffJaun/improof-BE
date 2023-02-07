@@ -15,7 +15,6 @@ import messageRouter from "./routes/messages.js";
 import conversationRouter from "./routes/conversations.js";
 import wrongRoutes from "./routes/wrongPath.js";
 import stoneRouter from "./routes/stones.js";
-import projectRouter from "./routes/projects.js";
 
 // I M P O R T:  E R R O R  H A N D L E R
 import { errorHandler } from "./middleware/errorhandler.js";

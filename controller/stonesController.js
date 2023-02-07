@@ -65,25 +65,23 @@ export async function addStone(req, res, next) {
       $push: { stones: newStone._id },
     });
 
-    const notification = await NotificationModel.create({
-      receiver: team,
-      notText:
-        newStone.kind === "stepstone"
-          ? `${userName} added a new stepstone to your ~${project.name}~ project`
-          : newStone.kind === "milestone"
-          ? `${userName} added a new milestone to your ~${project.name}~ project`
-          : `** ${userName} added the endstone to your ~${project.name}~ project **`,
+    restOfTheTeam.map(async (member) => {
+      const notification = await NotificationModel.create({
+        receiver: member,
+        notText:
+          newStone.kind === "stepstone"
+            ? `${userName} added a new stepstone to your ~${project.name}~ project`
+            : newStone.kind === "milestone"
+            ? `${userName} added a new milestone to your ~${project.name}~ project`
+            : `** ${userName} added the endstone to your ~${project.name}~ project **`,
+      });
+      await UserModel.findByIdAndUpdate(member, {
+        $push: { notifications: notification._id },
+      });
     });
-    restOfTheTeam.map(
-      async (member) =>
-        await UserModel.findByIdAndUpdate(member, {
-          $push: { notifications: notification._id },
-        })
-    );
 
-    const notMessage = 41 + project.name.length + userName.length;
     res.status(201).json({
-      message: notification.notText.slice(-notMessage),
+      message: "new stone added",
       status: true,
       data: "",
     });
@@ -116,25 +114,22 @@ export async function updateStone(req, res, next) {
         req.body,
         { new: true }
       );
-      const notification = await NotificationModel.create({
-        receiver: restOfTheTeam,
-        notText:
-          editedStone.kind === "stepstone"
-            ? `${userName} edited a stepstone in your ~${project.name}~ project`
-            : editedStone.kind === "milestone"
-            ? `${userName} edited a milestone in your ~${project.name}~ project`
-            : `${userName} edited the endstone of your ~${project.name}~ project`,
+      restOfTheTeam.map(async (member) => {
+        const notification = await NotificationModel.create({
+          receiver: member,
+          notText:
+            editedStone.kind === "stepstone"
+              ? `${userName} edited a stepstone in your ~${project.name}~ project`
+              : editedStone.kind === "milestone"
+              ? `${userName} edited a milestone in your ~${project.name}~ project`
+              : `${userName} edited the endstone of your ~${project.name}~ project`,
+        });
+        await UserModel.findByIdAndUpdate(member, {
+          $push: { notifications: notification._id },
+        });
       });
-      console.log("Rest of the team: ", restOfTheTeam);
-      restOfTheTeam.map(
-        async (member) =>
-          await UserModel.findByIdAndUpdate(member, {
-            $push: { notifications: notification._id },
-          })
-      );
-      const notMessage = 38 + project.name.length + userName.length;
       res.status(201).json({
-        message: notification.notText.slice(-notMessage),
+        message: "your stone is successfully updated",
         status: true,
         data: editedStone,
       });
@@ -159,31 +154,29 @@ export async function deleteStone(req, res, next) {
       throw error;
     } else {
       const stoneToBeDeleted = await StoneModel.findById(req.params.id);
-      const notification = await NotificationModel.create({
-        receiver: restOfTheTeam,
-        notText:
-          stoneToBeDeleted.kind === "stepstone"
-            ? `${userName} deleted a stepstone in your ~${project.name}~ project`
-            : stoneToBeDeleted.kind === "milestone"
-            ? `${userName} deleted a milestone in your ~${project.name}~ project`
-            : `${userName} deleted the endstone of your ~${project.name}~ project`,
-      });
       const deleteStone = await StoneModel.findByIdAndDelete(req.params.id);
       // Delete  the reference from the project
-      await project.updateOne({
+      await ProjectModel.updateOne({
         $pull: {
           stones: req.params.id,
         },
       });
-      restOfTheTeam.map(
-        async (member) =>
-          await UserModel.findByIdAndUpdate(member, {
-            $push: { notifications: notification._id },
-          })
-      );
-      const notMessage = 39 + project.name.length + userName.length;
+      restOfTheTeam.map(async (member) => {
+        const notification = await NotificationModel.create({
+          receiver: member,
+          notText:
+            stoneToBeDeleted.kind === "stepstone"
+              ? `${userName} deleted a stepstone in your ~${project.name}~ project`
+              : stoneToBeDeleted.kind === "milestone"
+              ? `${userName} deleted a milestone in your ~${project.name}~ project`
+              : `${userName} deleted the endstone of your ~${project.name}~ project`,
+        });
+        await UserModel.findByIdAndUpdate(member, {
+          $push: { notifications: notification._id },
+        });
+      });
       res.status(201).json({
-        message: notification.notText.slice(-notMessage),
+        message: "stone deleted",
         status: true,
         data: "",
       });
