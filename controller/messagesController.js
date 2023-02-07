@@ -22,12 +22,21 @@ export async function messagesGetAll(req, res, next) {
       conversationId
     ).populate("message");
     const userId = req.body.userId;
-    const receivedMessages = req.body.receivedMessages;
-    const notReadMessages = req.body.notReadMessages;
-
-    let receivedAndNotRead = receivedMessages.filter(
-      (x) => notReadMessages.indexOf(x) !== -1
+    const receivedMessages2 = conversation.message.filter(
+      (x) => x.from.toString() !== userId
     );
+
+    const receivedMessages = receivedMessages2.map((msg) => msg._id.toString());
+    const notReadMessages2 = conversation.message.filter(
+      (msg) => msg.isRead === false
+    );
+    const notReadMessages = notReadMessages2.map((msg) => msg._id.toString());
+
+    console.log(receivedMessages);
+    let receivedAndNotRead = receivedMessages.filter((x) =>
+      notReadMessages.includes(x)
+    );
+
     receivedAndNotRead.map(
       async (message) =>
         await MessageModel.findByIdAndUpdate(message.toString(), {
@@ -36,7 +45,7 @@ export async function messagesGetAll(req, res, next) {
         })
     );
 
-    console.log("received:", receivedMessages);
+    console.log("received:", receivedMessages2);
     console.log("not read:", notReadMessages);
     console.log("received and not read:", receivedAndNotRead);
 
