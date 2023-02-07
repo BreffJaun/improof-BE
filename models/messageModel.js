@@ -8,8 +8,7 @@ const messageSchema = new Schema(
     text: { type: String, required: true },
     isRead: { type: Boolean, default: false },
   },
-  { strictQuery: true },
-  { timestamps: true }
+  { strictQuery: true, timestamps: true }
 );
 
 // M O D E L - T E M P L A T E   F O R   D B   E N T R I E S

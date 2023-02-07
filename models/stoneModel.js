@@ -10,8 +10,7 @@ const stoneSchema = new Schema(
     media: [{ type: String }],
     team: [{ type: Schema.Types.ObjectId, ref: "User" }],
   },
-  { strictQuery: true },
-  { timestamps: true }
+  { strictQuery: true, timestamps: true }
 );
 
 // M O D E L - T E M P L A T E   F O R   D B   E N T R I E S

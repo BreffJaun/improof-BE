@@ -14,8 +14,7 @@ const projectSchema = new Schema(
     private: { type: Boolean, default: false },
     stones: [{ type: Schema.Types.ObjectId, ref: "Stone" }],
   },
-  { strictQuery: true },
-  { timestamps: true }
+  { strictQuery: true, timestamps: true }
 );
 
 // M O D E L - T E M P L A T E   F O R   D B   E N T R I E S
