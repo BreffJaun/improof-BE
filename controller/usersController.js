@@ -127,13 +127,13 @@ export async function verifyEmail(req, res, next) {
     const updatedUser = await UserModel.findByIdAndUpdate(id, {
       meta: { ...user.meta, isVerified: true },
     });
-    res.status(200).json({
-      message: "E-Mail is now SUCCESSFULLY verified!",
-      status: true,
-      data: "",
-      user: updatedUser,
-    });
-    // res.redirect(`${FE_HOST}/login`);
+    // res.status(200).json({
+    //   message: "E-Mail is now SUCCESSFULLY verified!",
+    //   status: true,
+    //   data: "",
+    //   user: updatedUser,
+    // });
+    res.redirect(`${FE_HOST}/login`);
     // if we have a frontend, we can direct the successful verification to the login page
   } catch (err) {
     next(err);
