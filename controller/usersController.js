@@ -33,6 +33,7 @@ export async function getUsers(req, res, next) {
 // ADD USER (POST) (N)
 export async function addUser(req, res, next) {
   try {
+    let newCreatedUser;
     const newUser = req.body;
     // in the UserModel we check if the given email-address is unique
     const hashedPassword = await bcrypt.hash(newUser.profile.password, 10);
@@ -44,12 +45,15 @@ export async function addUser(req, res, next) {
       createdUser = await UserModel.create({...newUser,
         profile: {...newUser.profile, password: hashedPassword, isTalent: true, initials: initials},
       });
+      newCreatedUser = createdUser
+      const userId = newCreatedUser._id
       // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
     const newNotification = await NotificationModel.create({
       receiver: userId,
       notText: `Fill out your profile to be found better by recruiters or other talents!`
     });
     const updatedUser = await UserModel.findByIdAndUpdate(userId, {$push: {notifications: newNotification._id}});
+    
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
 
     }
@@ -57,12 +61,14 @@ export async function addUser(req, res, next) {
       createdUser = await UserModel.create({...newUser,
         profile: {...newUser.profile, password: hashedPassword, isRecruiter: true, initials: initials},
       });
+      newCreatedUser = createdUser
+      const userId = newCreatedUser._id
       // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
     const newNotification = await NotificationModel.create({
       receiver: userId,
       notText: `Fill out your profile to give Talents a better impression of you!`
     });
-    const updatedUser = await UserModel.findByIdAndUpdate(follUserId, {$push: {notifications: newNotification._id}});
+    const updatedUser = await UserModel.findByIdAndUpdate(userId, {$push: {notifications: newNotification._id}});
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
     }
 
@@ -71,7 +77,7 @@ export async function addUser(req, res, next) {
     const verifyToken = jwt.sign(
       {
         email: newUser.email,
-        _id: createdUser._id,
+        _id: newCreatedUser._id,
       },
       JWT_KEY,
       { expiresIn: "1h" }
