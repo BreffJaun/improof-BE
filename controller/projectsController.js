@@ -273,7 +273,7 @@ export async function getProject(req, res, next) {
       throw err;
     }
     const project = await ProjectModel.findById(projectId)
-      .populate(["team"])
+      .populate(["team", "stones"])
       .populate({
         path: "stones",
         populate: {
