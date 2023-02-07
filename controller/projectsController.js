@@ -322,51 +322,36 @@ export async function updateProject(req, res, next) {
     // CHECK TEAM START //
     if(newData.team) {
       const newTeam = newData.team;
-      const oldTeam = oldProjectData.team;
-      const oldTeamWithoutCurrUser = oldTeam.filter((member) => member !== userId)
+      const oldTeamObjId = oldProjectData.team
+      const oldTeam = oldTeamObjId.map((id) => id.toString())
+      const oldTeamWithoutCurrUser = oldTeam.filter((member) => member !== userId);
+      const newMemberNameArr = [];
+
       const checkNewMembers = newTeam.filter((member) => !(oldTeam.includes(member)));
+      // console.log("checkNewMembers: " , checkNewMembers);
       
       // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION START //
       if(checkNewMembers.length > 0) {
-        // PUSH PROJECT ID IN NEW MEMBER //
-        checkNewMembers.map(async (member) => {
-          await UserModel.findByIdAndUpdate(member, {$push: {
-            myProjects: projectId}})
-        })
-        // CREATE NOTIFICATION FOR NEW MEMBERS
-        checkNewMembers.map(async (member) => {
+        checkNewMembers.forEach(async (member) => {
           const newMember = await UserModel.findById(member);
           const newMemberName = newMember.profile.firstName + " " + newMember.profile.lastName;
+          // CREATE NOTIFICATION FOR NEW MEMBERS 
           const newNotification = await NotificationModel.create({
             receiver: member,
             notText: `${userName} added you to the team of the Project "${oldProjectData.name}"!`
           })
-          await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
-          console.log("CREATE NOTIFICATION FOR NEW MEMBERS");
+          // CREATE NOTIFICATION FOR OLD MEMBERS 
+          await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id, myProjects: projectId}})
+          oldTeamWithoutCurrUser.forEach(async(oldMember) => {
+              const newNot = await NotificationModel.create({
+              receiver: oldMember,
+              notText: `${userName} added ${newMemberName} to the team of the Project "${oldProjectData.name}"!`
+              })
+          await UserModel.findByIdAndUpdate(oldMember, {$push: {notifications: newNot._id}})
+
+          });       
         })
         // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION END //
-        // CREATE NOT. FOR OLD MEMBERS WITHOUT CURR USER START //
-        oldTeamWithoutCurrUser.map(async (member) => {
-          console.log("CREATE NOT. FOR OLD MEMBERS WITHOUT 1");
-          const newMemberNameArr = [];
-          checkNewMembers.map(async(member) => {
-            const newMember = await UserModel.findById(member);
-            const newMemberName = newMember.profile.firstName + " " + newMember.profile.lastName;
-            newMemberNameArr.push(newMemberName);
-            console.log("CREATE NOT. FOR OLD MEMBERS WITHOUT 2");
-          })
-          newMemberNameArr.map(async(name) => {
-            const newNotification = await NotificationModel.create({
-              receiver: member,
-              notText: `${userName} added ${name} to the team of the Project "${oldProjectData.name}"!`
-            })
-            await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
-            console.log("CREATE NOT. FOR OLD MEMBERS WITHOUT 3");
-          })
-        })
-        // CREATE NOT. FOR OLD MEMBERS WITHOUT CURR USER END //
-        
-
         const project = await ProjectModel.findByIdAndUpdate(projectId, 
           {team: newTeam}, {new: true});
         oldProjectData = project;
@@ -454,10 +439,17 @@ export async function deleteProject(req, res, next) {
       const newNotification = await NotificationModel.create({
         receiver: member,
         notText: `${userName} deleted the Project "${oldProject.name}"!`
-      })
-      await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
+      });
+      await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}, $pull: {myProjects: projectId}})
     })
     // CREATE NOTIFICATION FOR ALL PROJECT MEMBERS END //
+
+    // DELETE PROJECT FROM ALL USERS START //
+    const allUsers = await UserModel.find();
+    allUsers.map(async(user) => {
+      await UserModel.findByIdAndUpdate(user._id, {$pull: {starProjects: projectId}});
+    });
+    // DELETE PROJECT FROM ALL USERS START //
 
     const deletedProject = await ProjectModel.findByIdAndDelete(req.params.id).populate(["team", "stones"]);
     res.status(200).json({
@@ -470,11 +462,3 @@ export async function deleteProject(req, res, next) {
     next(err);
   }
 }
-
-
-
-// const newNotification = await NotificationModel.create({
-    //   receiver: filteredMemberIds,
-    //   notText: `${userName} created a new Project and added you to the team!`
-    // });
-    // filteredMemberIds.map(async (member) => await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}}));

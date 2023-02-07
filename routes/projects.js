@@ -48,7 +48,7 @@ router
 router
   .route('/:id')
     .get(auth, getProject)
-    .patch( updateProject)
+    .patch(auth, updateProject)
     .delete(auth, deleteProject)
 
 

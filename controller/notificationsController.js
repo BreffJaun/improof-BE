@@ -19,14 +19,21 @@ const FE_HOST = process.env.FE_HOST;
 
 //========================
 
-// READ NOTIFICATION
+// READ NOTIFICATION (PATCH)
 export async function readNotification(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES
     const notIds = req.body.notIds;
+    const userId = req.body.userId;
 
     // SET NOTIFICATIONS AS "READ" ON CURRENT USER
-    notIds.map(async(not) => await NotificationModel.findByIdAndUpdate(not, {isRead: true}, {new: true}));
+    notIds.map(async(not) => {
+      const notification = await NotificationModel.findById(not);
+      if(notification.receiver.toString() === userId) {
+        console.log('IN');
+        await NotificationModel.findByIdAndUpdate(not, {isRead: true}, {new: true});
+      }
+    });
 
     const exampleNot = await NotificationModel.findById(notIds[0]);
     res.status(200).json({
@@ -39,7 +46,7 @@ export async function readNotification(req, res, next) {
   }
 }
 
-// DELETE NOTIFICATION
+// DELETE NOTIFICATION (DELETE)
 export async function deleteNotification(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES
@@ -63,12 +70,3 @@ export async function deleteNotification(req, res, next) {
 }
 
 
-// // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS START //
-// projectMembers.map(async (member) => {
-//   const newNotification = await NotificationModel.create({
-//     receiver: member,
-//     notText: `${userName} deleted the Project "${oldProject.name}"!`
-//   })
-//   await UserModel.findByIdAndUpdate(member, {$push: {notifications: newNotification._id}})
-// })
-// // CREATE NOTIFICATION FOR THE NON CREATOR MEMBERS END //
