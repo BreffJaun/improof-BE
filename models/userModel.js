@@ -13,6 +13,7 @@ const userSchema = new Schema(
       description: { type: String, default: "" },
       goal: { type: String, default: "" },
       position: { type: String, default: "" },
+      category: {type: String, default: ""},
       initials: { type: String, default: "" },
       // TALENT
       toolsAndSkills: { type: String, default: "" },

@@ -19,7 +19,34 @@ const FE_HOST = process.env.FE_HOST;
 
 //========================
 
-// DELETE NOTIFICATION
+// READ NOTIFICATION (PATCH)
+export async function readNotification(req, res, next) {
+  try {
+    // DEFINE NEEDED VARIABLES
+    const notIds = req.body.notIds;
+    const userId = req.body.userId;
+
+    // SET NOTIFICATIONS AS "READ" ON CURRENT USER
+    notIds.map(async(not) => {
+      const notification = await NotificationModel.findById(not);
+      if(notification.receiver.toString() === userId) {
+        console.log('IN');
+        await NotificationModel.findByIdAndUpdate(not, {isRead: true}, {new: true});
+      }
+    });
+
+    const exampleNot = await NotificationModel.findById(notIds[0]);
+    res.status(200).json({
+      message: "CHANGED isRead to TRUE was SUCCESSFULL!",
+      status: true,
+      data: exampleNot,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// DELETE NOTIFICATION (DELETE)
 export async function deleteNotification(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES
@@ -29,23 +56,17 @@ export async function deleteNotification(req, res, next) {
     // DELETE FROM CURRENT USER
     const currUser = await UserModel.findByIdAndUpdate(userId, {$pull: {notifications: notId}});
 
-    // CHECK IF THE NOTIFICATION IS STILL IN OTHER USERS START//
-    const allUsers = await UserModel.find();
-    const allNotifications = allUsers.map((user) =>  user.notifications.includes(notId)).every(element => element === false);
-    if(allNotifications) {
-      const notification = await NotificationModel.findByIdAndDelete(notId);
-    }
-    // CHECK IF THE NOTIFICATION IS STILL IN OTHER USERS END//
+    // DELETE NOTIFICATION
+    const notification = await NotificationModel.findByIdAndDelete(notId);
 
     res.status(200).json({
-      message: 
-        allNotifications ?
-        "DELETE of the COMPLETE notification was SUCCESSFULL!" : 
-        "DELETE of the notification ONLY from the user was SUCCESSFULL!",
+      message: `Notification deleted from user and from database was SUCCESSFULL!`,
       status: true,
-      data: "",
+      data: notification,
     });
   } catch (err) {
     next(err);
   }
 }
+
+
