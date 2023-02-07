@@ -59,13 +59,6 @@ export async function messagesGetAll(req, res, next) {
     next(error);
   }
 }
-export async function readMessages(req, res, next) {
-  try {
-    const userId = req.body.userId;
-  } catch (error) {
-    next(error);
-  }
-}
 
 // ADD A MESSAGE
 export async function addMessage(req, res, next) {
