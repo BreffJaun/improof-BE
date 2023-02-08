@@ -550,6 +550,18 @@ export async function updateUser(req, res, next) {
     }
     // CHECK POSITION END //
 
+    // CHECK FOR CATEGORY START //    
+    if (userData.profile.category) {
+      const category = userData.profile.category;
+      const user = await UserModel.findByIdAndUpdate(
+        id,
+        { profile: { ...oldUserData.profile, category: category } },
+        { new: true }
+      );
+      oldUserData = user;    
+    }
+    // CHECK FOR CATEGORY END //
+
     // CHECK TOOLSANDSKILLS START //
     if (userData.profile.toolsAndSkills) {
       const toolsAndSkills = userData.profile.toolsAndSkills;
