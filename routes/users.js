@@ -85,7 +85,7 @@ router
 router
   .route('/:id')
     .get(auth, getUser)
-    .patch(auth, userValidator, validateRequest,  updateUser)
+    .patch(auth, updateUser)
     .delete(auth, deleteUser);
 
 
