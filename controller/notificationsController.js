@@ -23,19 +23,16 @@ const FE_HOST = process.env.FE_HOST;
 export async function readNotification(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES
-    const notIds = req.body.notIds;
     const userId = req.body.userId;
+    const user = await UserModel.findById(userId).populate("notifications");
+    // FILTER "NONREAD" NOTIFICATIONS & SET ON TRUE
+    const userNotifications = user.notifications;
+    const nonReadNot =userNotifications.filter((not) => not.isRead === false)
+    nonReadNot.map(async(not) => {
+      const changeToIsRead = await NotificationModel.findByIdAndUpdate(not._id, {isRead: true}, {new: true});
+    })
 
-    // SET NOTIFICATIONS AS "READ" ON CURRENT USER
-    notIds.map(async(not) => {
-      const notification = await NotificationModel.findById(not);
-      if(notification.receiver.toString() === userId) {
-        console.log('IN');
-        await NotificationModel.findByIdAndUpdate(not, {isRead: true}, {new: true});
-      }
-    });
-
-    const exampleNot = await NotificationModel.findById(notIds[0]);
+    const exampleNot = await NotificationModel.findById(nonReadNot[0]);
     res.status(200).json({
       message: "CHANGED isRead to TRUE was SUCCESSFULL!",
       status: true,

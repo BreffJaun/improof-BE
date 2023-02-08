@@ -24,7 +24,7 @@ const router = express.Router();
 
 router
   .route("/read")
-    .patch(auth, readNotification);
+    .patch( readNotification);
 
 router
   .route("/delete")
