@@ -383,7 +383,15 @@ export async function getUser(req, res, next) {
         path:"team",       
         model: UserModel      
       }
-    }]);
+    },
+    {
+      path: "starProjects",
+      populate: {
+        path:"team",       
+        model: UserModel      
+      }
+    }
+  ]);
     res.status(200).json({
       userData: user,
       message: "Search was SUCCESSFULL!",
