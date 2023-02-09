@@ -221,7 +221,21 @@ export async function checkLogin(req, res, next) {
   try {
     const token = req.cookies.loginCookie;
     const tokenDecoded = jwt.verify(token, JWT_KEY);
-    const user = await UserModel.findById(tokenDecoded.userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
+    const user = await UserModel.findById(tokenDecoded.userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]).populate([{
+      path: "myProjects",
+      populate: {
+        path:"team",       
+        model: UserModel      
+      }
+    },
+    {
+      path: "starProjects",
+      populate: {
+        path:"team",       
+        model: UserModel      
+      }
+    }
+  ]);
     console.log("Token in Cookie is valid. User is loggedin");
     res
       .status(200)
