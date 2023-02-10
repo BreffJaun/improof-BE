@@ -36,7 +36,7 @@ export async function conversationsGetAll(req, res, next) {
 export async function conversationsGetOne(req, res, next) {
   try {
     // TAKE USERID
-    const conversationId = req.params.conversationId;
+    const conversationId = req.params.id;
 
     const conversation = await ConversationModel.findById(
       conversationId
