@@ -40,7 +40,7 @@ export async function conversationsGetOne(req, res, next) {
 
     const conversation = await ConversationModel.findById(
       conversationId
-    ).populate("message");
+    ).populate(["message", "participants"]);
 
     res.json({
       status: true,
