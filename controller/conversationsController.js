@@ -50,30 +50,39 @@ export async function addConversation(req, res, next) {
       participants: { $all: [userId, receiverId] },
     });
 
-    console.log(conversationExists);
-
     //CONVERSATION
     const message = await MessageModel.create({
       from: userId,
       text: req.body.message,
     });
 
-    const newConversation = await ConversationModel.create({
-      participants: participants,
-      message: message._id,
-    });
+    if (conversationExists) {
+      await ConversationModel.findByIdAndUpdate(conversationExists._id, {
+        $push: { message: message._id },
+      });
+      res.status(201).send({
+        message: "existed conversation continued",
+        status: true,
+        data: conversationExists,
+      });
+    } else {
+      const newConversation = await ConversationModel.create({
+        participants: participants,
+        message: message._id,
+      });
 
-    const pushInSender = await UserModel.findByIdAndUpdate(userId, {
-      $push: { conversations: newConversation._id },
-    });
-    const pushInReceiver = await UserModel.findByIdAndUpdate(receiverId, {
-      $push: { conversations: newConversation._id },
-    });
-    res.status(201).send({
-      message: "new conversation started",
-      status: true,
-      data: "",
-    });
+      const pushInSender = await UserModel.findByIdAndUpdate(userId, {
+        $push: { conversations: newConversation._id },
+      });
+      const pushInReceiver = await UserModel.findByIdAndUpdate(receiverId, {
+        $push: { conversations: newConversation._id },
+      });
+      res.status(201).send({
+        message: "new conversation started",
+        status: true,
+        data: newConversation,
+      });
+    }
   } catch (error) {
     next(error);
   }
