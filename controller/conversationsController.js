@@ -46,10 +46,9 @@ export async function addConversation(req, res, next) {
 
     const participants = [userId, receiverId];
 
-    const conversationExists = await ConversationModel.find({
+    const conversationExists = await ConversationModel.findOne({
       participants: { $all: [userId, receiverId] },
     });
-
     //CONVERSATION
     const message = await MessageModel.create({
       from: userId,
@@ -60,7 +59,9 @@ export async function addConversation(req, res, next) {
       await ConversationModel.findByIdAndUpdate(conversationExists._id, {
         $push: { message: message._id },
       });
-      res.status(201).send({
+      console.log("if", conversationExists._id);
+      console.log(conversationExists);
+      return res.status(201).send({
         message: "existed conversation continued",
         status: true,
         data: conversationExists,
@@ -71,10 +72,10 @@ export async function addConversation(req, res, next) {
         message: message._id,
       });
 
-      const pushInSender = await UserModel.findByIdAndUpdate(userId, {
+      await UserModel.findByIdAndUpdate(userId, {
         $push: { conversations: newConversation._id },
       });
-      const pushInReceiver = await UserModel.findByIdAndUpdate(receiverId, {
+      await UserModel.findByIdAndUpdate(receiverId, {
         $push: { conversations: newConversation._id },
       });
       res.status(201).send({
