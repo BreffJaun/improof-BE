@@ -50,15 +50,15 @@ export async function addConversation(req, res, next) {
       participants: { $all: [userId, receiverId] },
     });
     //CONVERSATION
-    const message = await MessageModel.create({
-      from: userId,
-      text: req.body.message,
-    });
+    // const message = await MessageModel.create({
+    //   from: userId,
+    //   text: req.body.message,
+    // });
 
     if (conversationExists) {
-      await ConversationModel.findByIdAndUpdate(conversationExists._id, {
-        $push: { message: message._id },
-      });
+      // await ConversationModel.findByIdAndUpdate(conversationExists._id, {
+      //   $push: { message: message._id },
+      // });
       console.log("if", conversationExists._id);
       console.log(conversationExists);
       return res.status(201).send({
@@ -69,7 +69,7 @@ export async function addConversation(req, res, next) {
     } else {
       const newConversation = await ConversationModel.create({
         participants: participants,
-        message: message._id,
+        // message: message._id,
       });
 
       await UserModel.findByIdAndUpdate(userId, {
