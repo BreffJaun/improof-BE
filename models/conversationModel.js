@@ -4,7 +4,7 @@ import { Schema, model } from "mongoose";
 // S C H E M A  -  D A T A   S T R U C T U R E
 const conversationSchema = new Schema(
   {
-    participants: [{ type: Schema.Types.ObjectId, ref: "Talent" }],
+    participants: [{ type: Schema.Types.ObjectId, ref: "User" }],
     message: [{ type: Schema.Types.ObjectId, ref: "Message" }],
   },
   { strictQuery: true }
