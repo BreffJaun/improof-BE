@@ -398,25 +398,25 @@ export async function getUser(req, res, next) {
 // UPDATE A USER (PATCH)
 export async function updateUser(req, res, next) {
   try {
-    // const reqToken = {
-    //   email: "braun_jeff@web.de",
-    //   userId: "63da419fbe4a413a49c74be1"
-    // }
     // DEFINE NEEDED VARIABLES //
-    const userData = req.body;
+    const userData = JSON.parse(req.body.data);
     const id = req.params.id;
     let oldUserData = await UserModel.findById(id);
     // DEFINE NEEDED VARIABLES //
+    console.log('req.body: ', JSON.parse(req.body.data));
+    console.log('req.file: ', req.file);
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
-    // CHECK IF AUTHORIZED START//
-    // if (id !== reqToken.userId) {
+    // CHECK IF AUTHORIZED START //
     if (id !== req.token.userId) {
       const err = new Error("Not Authorized!");
       err.statusCode = 401;
       throw err;
     }
     // CHECK IF AUTHORIZED END//
+
+    // const newUser = await UserModel.findByIdAndUpdate(id, userData)
+    // .populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
 
     // ## CHECK & UPDATE EVERY GIVEN PARAMETER START ## //
     // ** UPDATE PROFILE START ** //
@@ -441,7 +441,7 @@ export async function updateUser(req, res, next) {
     // CHECK FIRSTNAME END //
 
     // CHECK LASTNAME START //
-    if (userData.lastName) {
+    if (userData.profile.lastName) {
       const firstName = oldUserData.profile.lastName;
       const lastName = userData.profile.lastName;
       const initials = firstName[0].toUpperCase() + lastName[0].toUpperCase();
@@ -469,20 +469,6 @@ export async function updateUser(req, res, next) {
         { new: true }
       );
       oldUserData = user;
-      // ALTERNATIVE VERSION - PLEASE CHECKOUT ! ! !
-      // const userFromDb = await UserModel.find(
-      //   {email: userData.email},
-      //   {id: {$not: req.params.id}
-      // });
-      // console.log(userFromDb);
-      // if(userFromDb.length > 0) {
-      //   const err = new Error("There is already a user with this email!");
-      //   err.statusCode = 401;
-      //   throw err;
-      // } else {
-      //   const newEmail = userData.email;
-      //   const updatedUser = await UserModel.findByIdAndUpdate(id, {email: newEmail, new: true});
-      // }
     }
     // CHECK EMAIL END //
 
@@ -500,7 +486,7 @@ export async function updateUser(req, res, next) {
 
     // CHECK AVATAR BEGIN //
     if (req.file) {
-      await UserModel.findByIdAndUpdate(
+      const user = await UserModel.findByIdAndUpdate(
         id,
         {
           profile: {
@@ -714,7 +700,8 @@ export async function updateUser(req, res, next) {
     // CHECK COLORTHEME END //
     // ** UPDATE META END ** //
     // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //
-    const updatedUser = await UserModel.findById(id).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
+    const updatedUser = await UserModel.findById(id)
+    // .populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
     res.status(200).json({
       userData: updatedUser,
       message: "Update was SUCCESSFUL!",

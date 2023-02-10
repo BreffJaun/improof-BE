@@ -15,6 +15,12 @@ import messageRouter from "./routes/messages.js";
 import conversationRouter from "./routes/conversations.js";
 import wrongRoutes from "./routes/wrongPath.js";
 import stoneRouter from "./routes/stones.js";
+import uploadRouter from "./routes/uploads.js";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // I M P O R T:  E R R O R  H A N D L E R
 import { errorHandler } from "./middleware/errorhandler.js";
@@ -44,6 +50,8 @@ const FE_HOST = process.env.FE_HOST;
 // C R E A T E  S E R V E R
 const app = express();
 app.use(express.static("public"));
+app.use(express.static("uploads")); // notwendig?
+app.use(express.static("dist")); // notwendig?
 
 // M I D D L E W A R E
 
@@ -62,6 +70,9 @@ app.use(morgan("dev"));
 // ROUTER MIDDLEWARE
 // USERS
 app.use("/users", userRouter);
+app.get("/uploads/:id", (req, res) => {
+  res.sendFile(`${__dirname}/uploads/${req.params.id}`);
+});
 
 // PROJECT
 app.use("/projects", projectRouter);
