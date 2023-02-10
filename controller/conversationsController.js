@@ -46,6 +46,12 @@ export async function addConversation(req, res, next) {
 
     const participants = [userId, receiverId];
 
+    const conversationExists = await ConversationModel.find({
+      participants: { $all: [[userId, receiverId]] },
+    });
+
+    console.log(conversationExists);
+
     //CONVERSATION
     const message = await MessageModel.create({
       from: userId,
