@@ -23,9 +23,28 @@ export async function conversationsGetAll(req, res, next) {
     const allConversations = user.conversations;
 
     res.json({
-      conversations: allConversations,
       status: true,
-      data: "",
+      data: allConversations,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// GET ONE CONVERSATION
+
+export async function conversationsGetOne(req, res, next) {
+  try {
+    // TAKE USERID
+    const conversationId = req.params.conversationId;
+
+    const conversation = await ConversationModel.findById(
+      conversationId
+    ).populate("message");
+
+    res.json({
+      status: true,
+      data: conversation,
     });
   } catch (error) {
     next(error);

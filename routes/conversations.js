@@ -5,6 +5,7 @@ import express from "express";
 import {
   conversationsGetAll,
   addConversation,
+  conversationsGetOne,
   // deleteConversation,
 } from "../controller/conversationsController.js";
 
@@ -12,6 +13,8 @@ import {
 const router = express.Router();
 
 router.route("/").get(conversationsGetAll).post(addConversation);
+
+router.route("/").get(conversationsGetOne);
 
 // Eine Konversation wird automatisch gelöscht wenn die letze Nachricht gelöscht wird
 // router.route("/:id").delete(deleteConversation);
