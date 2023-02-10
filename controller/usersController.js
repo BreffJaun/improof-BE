@@ -197,7 +197,7 @@ export async function login(req, res, next) {
     const oneHour = 1000 * 60 * 60;
     res
       .cookie("loginCookie", token, {
-        maxAge: oneHour,
+        maxAge: oneHour * 24,
         httpOnly: true,
         sameSite: "none",
         secure: true,
