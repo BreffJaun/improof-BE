@@ -4,7 +4,7 @@ import { Schema, model } from "mongoose";
 // S C H E M A  -  D A T A   S T R U C T U R E
 const messageSchema = new Schema(
   {
-    from: { type: Schema.Types.ObjectId }, // Falls nicht geht, type: String
+    from: { type: Schema.Types.ObjectId, ref:"User" }, // Falls nicht geht, type: String
     text: { type: String, required: true },
     isRead: { type: Boolean, default: false },
   },

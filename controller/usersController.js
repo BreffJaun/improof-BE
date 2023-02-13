@@ -7,7 +7,8 @@ import sgMail from "@sendgrid/mail";
 // I M P O R T:  F U N C T I O N S
 import UserModel from "../models/userModel.js";
 import NotificationModel from "../models/notificationModel.js";
-import ProjectModel from "../models/projectModel.js"
+import ProjectModel from "../models/projectModel.js";
+import MessageModel from "../models/messageModel.js"
 
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
@@ -221,7 +222,8 @@ export async function checkLogin(req, res, next) {
   try {
     const token = req.cookies.loginCookie;
     const tokenDecoded = jwt.verify(token, JWT_KEY);
-    const user = await UserModel.findById(tokenDecoded.userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]).populate([{
+    const user = await UserModel.findById(tokenDecoded.userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]).populate([
+    {
       path: "myProjects",
       populate: {
         path:"team",       
@@ -234,8 +236,23 @@ export async function checkLogin(req, res, next) {
         path:"team",       
         model: UserModel      
       }
+    },
+    {
+      path: "conversations",
+      populate: {
+        path:"message",       
+        model: MessageModel      
+      }
+    },
+    {
+      path: "conversations",
+      populate: {
+        path:"participants",       
+        model: UserModel 
+      }
     }
   ]);
+  console.log(user.conversations);
     console.log("Token in Cookie is valid. User is loggedin");
     res
       .status(200)
@@ -391,7 +408,7 @@ export async function getUser(req, res, next) {
       err.statusCode = 422;
       throw err;
     }
-    const user = await UserModel.findById(req.params.id).populate(["starProjects", "notifications", "conversations", "follows"]).populate([{
+    const user = await UserModel.findById(req.params.id).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]).populate([{
       path: "myProjects",
       populate: {
         path:"team",       
@@ -404,8 +421,24 @@ export async function getUser(req, res, next) {
         path:"team",       
         model: UserModel      
       }
+    },
+    {
+      path: "conversations",
+      populate: {
+        path:"participants",       
+        model: UserModel      
+      }
+    },
+    {
+      path:"conversations",
+      populate: {
+        path:"message",
+        model: MessageModel
+      }
     }
+
   ]);
+  
     res.status(200).json({
       userData: user,
       message: "Search was SUCCESSFULL!",
