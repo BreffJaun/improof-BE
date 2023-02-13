@@ -8,7 +8,8 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
 // I M P O R T:  R O U T E S
-import {userRouter, mediaRouter} from "./routes/users.js";
+import userRouter from "./routes/users.js";
+import { mediaRouter } from "./routes/medias.js";
 import projectRouter from "./routes/projects.js";
 import notificationRouter from "./routes/notifications.js";
 import messageRouter from "./routes/messages.js";
@@ -18,12 +19,12 @@ import stoneRouter from "./routes/stones.js";
 
 // ** MULTER START ** //
 // IMPORT FOR MULTER
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+// import { fileURLToPath } from "url";
+// import { dirname } from "path";
 
 // VARIABLES FOR MULTER
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
 // ** MULTER END ** //
 
 // I M P O R T:  E R R O R  H A N D L E R
@@ -35,8 +36,8 @@ const MONGO_DB_CONNECTION_STRING =
   "mongodb://localhost:27017";
 const PORT = process.env.PORT || 4000;
 
+// gridBucket is for retrieving files from the Database
 export let gridBucket;
-
 mongoose.set("strictQuery", false); // to prevent an erroneous error message
 mongoose
   .connect(MONGO_DB_CONNECTION_STRING, {
@@ -62,6 +63,8 @@ const FE_HOST = process.env.FE_HOST;
 // C R E A T E  S E R V E R
 const app = express();
 app.use(express.static("public"));
+
+// For Multer
 // app.use(express.static("uploads")); // notwendig?
 // app.use(express.static("dist")); // notwendig?
 
@@ -82,6 +85,7 @@ app.use(morgan("dev"));
 // ROUTER MIDDLEWARE
 // USERS
 app.use("/users", userRouter);
+
 // MULTER
 // app.get("/uploads/:id", (req, res) => {
 //   res.sendFile(`${__dirname}/uploads/${req.params.id}`);
