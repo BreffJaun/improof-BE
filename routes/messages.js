@@ -12,7 +12,7 @@ import {
 // C R E A T E   R O U T E S
 const router = express.Router();
 
-router.route("/").get(messagesGetAll).post(addMessage);
+router.route("/").patch(messagesGetAll).post(addMessage);
 
 router.route("/:id").delete(deleteMessage).patch(updateMessage);
 
