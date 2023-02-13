@@ -8,6 +8,7 @@ import sgMail from "@sendgrid/mail";
 import UserModel from "../models/userModel.js";
 import NotificationModel from "../models/notificationModel.js";
 import ProjectModel from "../models/projectModel.js"
+import MessageModel from "../models/messageModel.js";
 
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
@@ -378,12 +379,20 @@ export async function getUser(req, res, next) {
       throw err;
     }
     const user = await UserModel.findById(req.params.id).populate(["starProjects", "notifications", "conversations", "follows"]).populate([{
-      path: "myProjects",
-      populate: {
-        path:"team",       
-        model: UserModel      
+        path: "myProjects",
+        populate: {
+          path:"team",       
+          model: UserModel      
+        }
+      },
+      {
+        path: "conversations",
+        populate: {
+          path:"message",       
+          model: MessageModel      
+        }
       }
-    }]);
+      ]);
     res.status(200).json({
       userData: user,
       message: "Search was SUCCESSFULL!",
@@ -442,7 +451,7 @@ export async function updateUser(req, res, next) {
 
     // CHECK LASTNAME START //
     if (userData.profile.lastName) {
-      const firstName = oldUserData.profile.lastName;
+      const firstName = oldUserData.profile.firstName;
       const lastName = userData.profile.lastName;
       const initials = firstName[0].toUpperCase() + lastName[0].toUpperCase();
       const user = await UserModel.findByIdAndUpdate(
@@ -485,13 +494,29 @@ export async function updateUser(req, res, next) {
     // CHECK PASSWORD END //
 
     // CHECK AVATAR BEGIN //
+    // MULTER VERSION
+    // if (req.file) {
+    //   const user = await UserModel.findByIdAndUpdate(
+    //     id,
+    //     {
+    //       profile: {
+    //         ...oldUserData.profile,
+    //         avatar: `${BE_HOST}/${req.file.path}`,
+    //       },
+    //     },
+    //     { new: true }
+    //   );
+    //   oldUserData = user;
+    // }
+
+    // GRIDFS VERSION
     if (req.file) {
       const user = await UserModel.findByIdAndUpdate(
         id,
         {
           profile: {
             ...oldUserData.profile,
-            avatar: `${BE_HOST}/${req.file.path}`,
+            avatar: `${req.file.id}`,
           },
         },
         { new: true }

@@ -8,19 +8,23 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
 // I M P O R T:  R O U T E S
-import userRouter from "./routes/users.js";
+import {userRouter, mediaRouter} from "./routes/users.js";
 import projectRouter from "./routes/projects.js";
 import notificationRouter from "./routes/notifications.js";
 import messageRouter from "./routes/messages.js";
 import conversationRouter from "./routes/conversations.js";
 import wrongRoutes from "./routes/wrongPath.js";
 import stoneRouter from "./routes/stones.js";
-import uploadRouter from "./routes/uploads.js";
+
+// ** MULTER START ** //
+// IMPORT FOR MULTER
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
+// VARIABLES FOR MULTER
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+// ** MULTER END ** //
 
 // I M P O R T:  E R R O R  H A N D L E R
 import { errorHandler } from "./middleware/errorhandler.js";
@@ -31,13 +35,21 @@ const MONGO_DB_CONNECTION_STRING =
   "mongodb://localhost:27017";
 const PORT = process.env.PORT || 4000;
 
+export let gridBucket;
+
 mongoose.set("strictQuery", false); // to prevent an erroneous error message
 mongoose
   .connect(MONGO_DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("Connect with MongoDB: SUCCESS ✅"))
+  .then(() => {
+    console.log("Connect with MongoDB: SUCCESS ✅"); 
+    let db = mongoose.connections[0].db;
+    gridBucket = new mongoose.mongo.GridFSBucket(db, {
+      bucketName: "photos" 
+    });
+  })
   .catch((err) => console.log("Connect with MongoDB: FAILED ⛔", err));
 // for errors which comes after the successfully connection
 mongoose.connection.on("error", console.log);
@@ -50,8 +62,8 @@ const FE_HOST = process.env.FE_HOST;
 // C R E A T E  S E R V E R
 const app = express();
 app.use(express.static("public"));
-app.use(express.static("uploads")); // notwendig?
-app.use(express.static("dist")); // notwendig?
+// app.use(express.static("uploads")); // notwendig?
+// app.use(express.static("dist")); // notwendig?
 
 // M I D D L E W A R E
 
@@ -70,9 +82,13 @@ app.use(morgan("dev"));
 // ROUTER MIDDLEWARE
 // USERS
 app.use("/users", userRouter);
-app.get("/uploads/:id", (req, res) => {
-  res.sendFile(`${__dirname}/uploads/${req.params.id}`);
-});
+// MULTER
+// app.get("/uploads/:id", (req, res) => {
+//   res.sendFile(`${__dirname}/uploads/${req.params.id}`);
+// });
+
+// GRID FS
+app.use("/media", mediaRouter) ;
 
 // PROJECT
 app.use("/projects", projectRouter);
