@@ -1,6 +1,6 @@
 // I M P O R T:  E X T E R N A L  D E P E N D E N C I E S
+import * as dotenv from "dotenv"; dotenv.config();
 import express from 'express';
-import multer from 'multer';
 
 // I M P O R T:  F U N C T I O N S
 import {validateRequest} from '../middleware/validator.js'
@@ -9,6 +9,7 @@ import {
   // , 
   // userUpdateValidator 
 } from '../middleware/userValidator.js';
+import { upload } from "./medias.js";
 
 // I M P O R T:  C O N T R O L L E R
 import {
@@ -29,64 +30,61 @@ import {
 } from '../controller/usersController.js';
 
 import { auth } from '../middleware/auth.js';
-import { get } from 'mongoose';
 
 // ========================
 
-// D E F I N E   M U L T E R   I N S T A N C E
-const upload = multer({dest: 'uploads/'});
-
 // C R E A T E   R O U T E S
-const router = express.Router();
+const userRouter = express.Router();
 
-router
+userRouter
   .route('/')
     .get(getUsers)
-router
-  .route('/add')
-    .post(userValidator, validateRequest, addUser);
 
-router
+userRouter
+  .route('/add')
+    .post(upload.single('avatar'), userValidator, validateRequest, addUser);
+
+userRouter
   .route('/verify/:token')
     .get(verifyEmail)
     
-router
+userRouter
   .route('/login')
     .post(login)
 
-router
+userRouter
   .route('/checklogin')
     .get(checkLogin)
 
-router
+userRouter
   .route('/logout')
     .get(logout)
 
-router
+userRouter
   .route('/forgotpassword')
     .post(forgotPassword)
 
-router
+userRouter
   .route('/reset/:token')
     .get(verifyResetToken);
     
-router
+userRouter
   .route('/setnewpassword')
     .post(setNewPassword)
     
-router
+userRouter
   .route('/follow/add')
     .patch(auth, followUser)
 
-router
+userRouter
   .route('/follow/delete')
     .delete(auth, leadUser)
 
-router
+userRouter
   .route('/:id')
     .get(auth, getUser)
-    .patch(auth, updateUser)
+    .patch(upload.single('avatar'),auth, updateUser)
     .delete(auth, deleteUser);
 
 
-export default router;
+export default userRouter;
