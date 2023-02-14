@@ -36,17 +36,18 @@ export async function getProjects(req, res, next) {
 export async function addProject(req, res, next) {
   try {
     // TAKE USER DATA
-    const userId = req.body.userId;
-    const user = await UserModel.findById(userId);
-    const userName = user.profile.firstName + " " + user.profile.lastName;
+    const userData = req.body;
+    console.log('userData: ', userData);
+    // const user = await UserModel.findById(userId);
+    // const userName = user.profile.firstName + " " + user.profile.lastName;
 
-    // TAKE PROJECT DATA
-    const projectData = req.body;
-    const teamMemberIds = projectData.team;
+    // // TAKE PROJECT DATA
+    // const projectData = JSON.parse(req.body.data);
+    // const teamMemberIds = projectData.team;
 
-    // CREATE NEW PROJECT
-    const newProject = await ProjectModel.create(projectData);
-    const projectId = newProject._id;
+    // // CREATE NEW PROJECT
+    // const newProject = await ProjectModel.create(projectData);
+    // const projectId = newProject._id;
 
     // AVATAR IMPLEMENT BEGIN //
     if (req.file) {

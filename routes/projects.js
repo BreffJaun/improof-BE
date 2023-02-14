@@ -29,7 +29,7 @@ const router = express.Router();
 
 router.route("/").get(getProjects);
 
-router.route("/add").post(projectValidator, validateRequest, addProject);
+router.route("/add").post( addProject);
 
 router.route("/follow/add").patch(auth, followProject);
 
