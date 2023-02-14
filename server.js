@@ -8,6 +8,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 
 // I M P O R T:  R O U T E S
+import searchRouter from "./routes/searches.js";
 import userRouter from "./routes/users.js";
 import { mediaRouter } from "./routes/medias.js";
 import projectRouter from "./routes/projects.js";
@@ -93,6 +94,9 @@ app.use("/users", userRouter);
 
 // GRID FS
 app.use("/media", mediaRouter) ;
+
+// SEARCH
+app.use("/search", searchRouter);
 
 // PROJECT
 app.use("/projects", projectRouter);
