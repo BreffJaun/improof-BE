@@ -35,28 +35,41 @@ export async function getProjects(req, res, next) {
 // CREATE PROJECT (POST) (N)
 export async function addProject(req, res, next) {
   try {
-    // TAKE USER DATA
-    const userData = req.body;
-    console.log('userData: ', userData);
-    // const user = await UserModel.findById(userId);
-    // const userName = user.profile.firstName + " " + user.profile.lastName;
+    // TAKE PROJECT DATA
+    const userData = JSON.parse(req.body.data);
+    const userId = userData.userId;
+    const user = await UserModel.findById(userId);
+    const userName = user.profile.firstName + " " + user.profile.lastName;
 
-    // // TAKE PROJECT DATA
-    // const projectData = JSON.parse(req.body.data);
-    // const teamMemberIds = projectData.team;
+    // TAKE PROJECT DATA
+    const projectData = JSON.parse(req.body.data);
+    const teamMemberIds = projectData.team;
 
-    // // CREATE NEW PROJECT
-    // const newProject = await ProjectModel.create(projectData);
-    // const projectId = newProject._id;
+    // CREATE NEW PROJECT
+    const newProject = await ProjectModel.create(projectData);
+    const projectId = newProject._id;
 
     // AVATAR IMPLEMENT BEGIN //
+    // MULTER VERSION
+    // if (req.file) {
+    //   await ProjectModel.findByIdAndUpdate(projectId, {
+    //     thumbnail: `${BE_HOST}/${req.file.path}`,
+    //   });
+    // } else {
+    //   await ProjectModel.findByIdAndUpdate(projectId, {
+    //     thumbnail: `${BE_HOST}/assets/images/coffypaste_icon_avatar.png`,
+    //   });
+    // }
+
+    // GRIDFS VERSION
     if (req.file) {
       await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail: `${BE_HOST}/${req.file.path}`,
+        thumbnail: `${req.file.id}`,
       });
     } else {
+      console.log('IM REQ.FILE ELSE');
       await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail: `${BE_HOST}/assets/images/coffypaste_icon_avatar.png`,
+        thumbnail: `63eb4e30424b07fc2e90d5b1`,
       });
     }
     // AVATAR IMPLEMENT END //
@@ -97,16 +110,14 @@ export async function addProject(req, res, next) {
         <div>
         <p>Hi, </p>
 
-        <p>${
-          user.profile.firstName + " " + user.profile.lastName
-        } invited you to join the 'improof-community'.</p>
+        <p>${userName} invited you to join the 'improof-community'.</p>
 
         <p style="background-color: orange; border-radius: 7px; width: 120px; height: 30px; text-decoration: none;">
         Please register here
         <a href="${FE_HOST}/register">
         Register</a></p>      
         <p>and contact <a href="${FE_HOST}/myprofile/${user._id}">
-        ${user.profile.firstName + " " + user.profile.lastName}</a></p>
+        ${userName}</a></p>
       
         <p>Your 'improof' Team </p>
         
@@ -118,7 +129,6 @@ export async function addProject(req, res, next) {
 
     // CLEAR INVITEOTHERS FROM PROJECT
     await ProjectModel.findByIdAndUpdate(projectId, {
-      ...newProject,
       inviteOthers: (newProject.inviteOthers.length = 0),
     });
 

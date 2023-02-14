@@ -5,6 +5,7 @@ import multer from "multer";
 // I M P O R T:  F U N C T I O N S
 import { validateRequest } from "../middleware/validator.js";
 import { projectValidator } from "../middleware/projectValidator.js";
+import { upload } from "./medias.js";
 
 // I M P O R T:  C O N T R O L L E R
 import {
@@ -21,15 +22,12 @@ import { auth } from "../middleware/auth.js";
 
 // ========================
 
-// D E F I N E   M U L T E R   I N S T A N C E
-const upload = multer({ dest: "uploads/" });
-
 // C R E A T E   R O U T E S
 const router = express.Router();
 
 router.route("/").get(getProjects);
 
-router.route("/add").post( addProject);
+router.route("/add").post(upload.single('thumbnail'), addProject);
 
 router.route("/follow/add").patch(auth, followProject);
 
