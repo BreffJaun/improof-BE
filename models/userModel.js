@@ -9,7 +9,7 @@ const userSchema = new Schema(
       lastName: { type: String, required: true },
       email: { type: String, required: true, unique: true },
       password: { type: String, required: true },
-      avatar: { type: String, default: "" },
+      avatar: { type: String, default: "http://localhost:2404/media/63eb4e30424b07fc2e90d5b1" },
       description: { type: String, default: "" },
       goal: { type: String, default: "" },
       position: { type: String, default: "" },

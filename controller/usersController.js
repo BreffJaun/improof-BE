@@ -562,7 +562,7 @@ export async function updateUser(req, res, next) {
         {
           profile: {
             ...oldUserData.profile,
-            avatar: `${req.file.id}`,
+            avatar: `${BE_HOST}/media/${req.file.id}`,
           },
         },
         { new: true }

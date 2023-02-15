@@ -64,14 +64,15 @@ export async function addProject(req, res, next) {
     // GRIDFS VERSION
     if (req.file) {
       await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail: `${req.file.id}`,
+        thumbnail: `${BE_HOST}/media/${req.file.id}`,
       });
-    } else {
-      console.log('IM REQ.FILE ELSE');
-      await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail: `63eb4e30424b07fc2e90d5b1`,
-      });
-    }
+    } 
+    // else {
+    //   console.log('IM REQ.FILE ELSE');
+    //   await ProjectModel.findByIdAndUpdate(projectId, {
+    //     thumbnail: `${BE_HOST}/media/63eb4e30424b07fc2e90d5b1`,
+    //   });
+    // }
     // AVATAR IMPLEMENT END //
 
     // ADD PROJECT TO EVERY TEAMMEMBER
@@ -358,7 +359,7 @@ export async function updateProject(req, res, next) {
     if (req.file) {
       await ProjectModel.findByIdAndUpdate(
         projectId,
-        { thumbnail: `${BE_HOST}/${req.file.path}` },
+        { thumbnail: `${BE_HOST}/media/${req.file.id}` },
         { new: true }
       );
       oldProjectData = project;
