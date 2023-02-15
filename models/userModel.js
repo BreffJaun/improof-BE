@@ -1,6 +1,7 @@
 // I M P O R T   D E P E N D E N C I E S
 import { Schema, model } from "mongoose";
 
+const INITIALTHEME = ["c-DB2","bg-gDB"]
 // S C H E M A  -  D A T A   S T R U C T U R E
 const userSchema = new Schema(
   {
@@ -41,7 +42,7 @@ const userSchema = new Schema(
       isVerified: { type: Boolean, default: false },
       isVerifiedTCP: { type: Boolean, default: false }, // TCP = To Change Password;
       darkMode: { type: Boolean, default: false },
-      colorTheme: [{ type: String, default: "c-DB2" }, { type: String, default: "bg-gDB" }],
+      colorTheme: [{ type: String}],
       firstLogin: { type: Boolean, default: true }, // for the Congrats Component
       loginCount: { type: Number, default: 0 },
     },

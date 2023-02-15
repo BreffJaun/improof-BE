@@ -43,8 +43,10 @@ export async function addUser(req, res, next) {
       newUser.profile.lastName[0].toUpperCase();
     let createdUser;
     if (newUser.profile.isTalent) {
+      // newUser.meta = ["c-DB2","bg-gDB"]
       createdUser = await UserModel.create({...newUser,
         profile: {...newUser.profile, password: hashedPassword, isTalent: true, initials: initials},
+        meta:{colorTheme: ["c-DB2","bg-gDB"]}
       });
       newCreatedUser = createdUser
       const userId = newCreatedUser._id
