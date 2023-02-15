@@ -748,7 +748,7 @@ export async function updateUser(req, res, next) {
     // ** UPDATE META START ** //
     // CHECK DARKMODE START //
     if (userData.meta.darkMode) {
-      const darkMode = userData.location.darkMode;
+      const darkMode = userData.meta.darkMode;
       const user = await UserModel.findByIdAndUpdate(
         id,
         { meta: { ...oldUserData.meta, darkMode: darkMode } },
@@ -760,7 +760,7 @@ export async function updateUser(req, res, next) {
 
     // CHECK COLORTHEME START //
     if (userData.meta.colorTheme) {
-      const colorTheme = userData.location.colorTheme;
+      const colorTheme = userData.meta.colorTheme;
       const user = await UserModel.findByIdAndUpdate(
         id,
         { meta: { ...oldUserData.meta, colorTheme: colorTheme } },

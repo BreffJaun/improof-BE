@@ -41,7 +41,7 @@ const userSchema = new Schema(
       isVerified: { type: Boolean, default: false },
       isVerifiedTCP: { type: Boolean, default: false }, // TCP = To Change Password;
       darkMode: { type: Boolean, default: false },
-      colorTheme: { type: String, default: "bg-gO" },
+      colorTheme: [{ type: String, default: "c-DB2" }, { type: String, default: "bg-gDB" }],
       firstLogin: { type: Boolean, default: true }, // for the Congrats Component
       loginCount: { type: Number, default: 0 },
     },
