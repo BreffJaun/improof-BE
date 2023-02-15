@@ -50,9 +50,8 @@ export async function addStone(req, res, next) {
     const userId = req.body.userId;
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
-    const team = project.team;
+    const team = project.team; // Project Team for notification push
     const restOfTheTeam = team.filter((member) => member.toString() !== userId);
-    const teamStone = req.body.team;
 
     if (!team.includes(userId)) {
       const error = new Error(
