@@ -36,7 +36,7 @@ router.route("/follow/delete").delete(auth, leadProject);
 router
   .route("/:id")
   .get(auth, getProject)
-  .patch(auth, updateProject)
+  .patch(upload.single('thumbnail'), auth, updateProject)
   .delete(auth, deleteProject);
 
 export default router;

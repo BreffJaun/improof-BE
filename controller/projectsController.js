@@ -308,12 +308,12 @@ export async function updateProject(req, res, next) {
   try {
     // DEFINE NEEDED VARIABLES START//
     // TAKE USERID
-    const userId = req.body.userId;
+    const newData = JSON.parse(req.body.data);
+    const userId = newData.userId;
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
 
     // TAKE PROJECT DATA
-    const newData = req.body;
     const projectId = req.params.id;
     const project = await ProjectModel.findById(projectId);
     const projectMembers = project.team;

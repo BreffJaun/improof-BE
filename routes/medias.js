@@ -26,7 +26,11 @@ const storage = new GridFsStorage({
   url: url,
   file: (req, file) => {
     if(file.mimetype === 'image/jpeg' ||
-    file.mimetype === 'image/png'
+    file.mimetype === 'image/jpg' ||
+    file.mimetype === 'image/png' ||
+    file.mimetype === 'image/gif' ||
+    file.mimetype === 'image/tiff' ||
+    file.mimetype === 'image/bmp'
     ){
       return {
         bucketName: "photos"
@@ -39,6 +43,28 @@ const storage = new GridFsStorage({
 
 const upload = multer({storage});
 
+const videoStorage = new GridFsStorage({
+  url: url,
+  file: (req, file) => {
+    if(file.mimetype === 'video/mp4' ||
+    file.mimetype === 'video/mov' ||
+    file.mimetype === 'video/wmv' ||
+    file.mimetype === 'video/avi' ||
+    file.mimetype === 'video/mkv' ||
+    file.mimetype === 'video/flv'
+    ){
+      return {
+        bucketName: "videos"
+      };
+    } else {
+      return null
+    }
+  }
+});
+
+const videoUpload = multer({videoStorage});
+
+
 // C R E A T E   R O U T E S
 const mediaRouter = express.Router();
 
@@ -46,4 +72,4 @@ mediaRouter
   .route('/:id')
     .get(getMedia);
 
-export {mediaRouter, upload};
+export {mediaRouter, upload, videoUpload};
