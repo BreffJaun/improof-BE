@@ -43,26 +43,26 @@ const storage = new GridFsStorage({
 
 const upload = multer({storage});
 
-const videoStorage = new GridFsStorage({
-  url: url,
-  file: (req, file) => {
-    if(file.mimetype === 'video/mp4' ||
-    file.mimetype === 'video/mov' ||
-    file.mimetype === 'video/wmv' ||
-    file.mimetype === 'video/avi' ||
-    file.mimetype === 'video/mkv' ||
-    file.mimetype === 'video/flv'
-    ){
-      return {
-        bucketName: "videos"
-      };
-    } else {
-      return null
-    }
-  }
-});
+// const videoStorage = new GridFsStorage({
+//   url: url,
+//   file: (req, file) => {
+//     if(file.mimetype === 'video/mp4' ||
+//     file.mimetype === 'video/mov' ||
+//     file.mimetype === 'video/wmv' ||
+//     file.mimetype === 'video/avi' ||
+//     file.mimetype === 'video/mkv' ||
+//     file.mimetype === 'video/flv'
+//     ){
+//       return {
+//         bucketName: "videos"
+//       };
+//     } else {
+//       return null
+//     }
+//   }
+// });
 
-const videoUpload = multer({videoStorage});
+// const videoUpload = multer({videoStorage});
 
 
 // C R E A T E   R O U T E S
@@ -72,4 +72,8 @@ mediaRouter
   .route('/:id')
     .get(getMedia);
 
-export {mediaRouter, upload, videoUpload};
+export {
+  mediaRouter, 
+  upload, 
+  // videoUpload
+};
