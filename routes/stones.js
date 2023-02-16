@@ -18,10 +18,8 @@ const router = express.Router();
 
 router.route("/").get(getStones).post(upload.single("media"), addStone);
 
-router
-  .route("/:stoneId")
-  .get(getOneStone)
-  .patch(upload.single("media"), updateStone)
-  .delete(deleteStone);
+router.route("/:stoneId").get(getOneStone).delete(deleteStone);
+
+router.route("/:projectId/:stoneId").patch(upload.single("media"), updateStone);
 
 export default router;
