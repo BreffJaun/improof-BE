@@ -15,10 +15,8 @@ const router = express.Router();
 
 router.route("/").get(getStones).post(addStone);
 
-router
-  .route("/:stoneId")
-  .get(getOneStone)
-  .patch(updateStone)
-  .delete(deleteStone);
+router.route("/:stoneId").get(getOneStone).delete(deleteStone);
+
+router.route("/:projectId/:stoneId").patch(updateStone);
 
 export default router;
