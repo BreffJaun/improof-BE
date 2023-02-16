@@ -7,6 +7,10 @@ import ProjectModel from "../models/projectModel.js";
 import NotificationModel from "../models/notificationModel.js";
 import UserModel from "../models/userModel.js";
 
+// I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
+const BE_HOST = process.env.BE_HOST;
+const FE_HOST = process.env.FE_HOST;
+
 //========================
 
 // Get all the stones of one project
@@ -46,9 +50,12 @@ export async function getOneStone(req, res, next) {
 // Add a new stone in a project
 export async function addStone(req, res, next) {
   try {
-    const projectId = req.body.projectId;
+    const newStoneData = JSON.parse(req.body.data)
+    const projectId = newStoneData.projectId
+    console.log("projectId: ", projectId);
     const project = await ProjectModel.findById(projectId);
-    const userId = req.body.userId;
+    const userId = newStoneData.userId;
+    console.log("userId: ", userId);
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
     const team = project.team; // Project Team for notification push
@@ -61,7 +68,25 @@ export async function addStone(req, res, next) {
       error.statusCode = 401;
       throw error;
     }
-    const newStone = await StoneModel.create(req.body);
+    const newStone = await StoneModel.create(newStoneData);
+
+    // CHECK MEDIA START //
+    if (req.file) {
+      await ProjectModel.findByIdAndUpdate(
+        projectId,
+        { media: `${BE_HOST}/media/${req.file.id}` },
+        { new: true }
+      );
+    }
+    // else {
+    //   await ProjectModel.findByIdAndUpdate(
+    //     projectId,
+    //     { media: `${BE_HOST}/media/63eb4e30424b07fc2e90d5b1` },
+    //     { new: true }
+    //   );
+    // }
+    // CHECK MEDIA END //
+
     const pushIntoProject = await ProjectModel.findByIdAndUpdate(projectId, {
       $push: { stones: newStone._id },
     });
