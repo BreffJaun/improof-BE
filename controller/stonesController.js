@@ -30,8 +30,9 @@ export async function getOneStone(req, res, next) {
   try {
     // const projectId = req.body.projectId;
     // const project = await ProjectModel.findById(projectId).populate("stones");
+    console.log(req.params);
     const stoneId = req.params.stoneId;
-    const stone = await StoneModel.findById(stoneId).populate("contributors");
+    const stone = await StoneModel.findById(stoneId).populate("team");
     res.status(200).json({
       message: "A specific stone SUCCESS!",
       status: true,
@@ -110,7 +111,7 @@ export async function updateStone(req, res, next) {
       throw error;
     } else {
       const editedStone = await StoneModel.findByIdAndUpdate(
-        req.params.id,
+        req.params.stoneId,
         req.body,
         { new: true }
       );
@@ -136,6 +137,7 @@ export async function updateStone(req, res, next) {
     }
   } catch (error) {}
 }
+
 export async function deleteStone(req, res, next) {
   try {
     const projectId = req.body.projectId;
