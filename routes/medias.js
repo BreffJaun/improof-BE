@@ -30,7 +30,14 @@ const storage = new GridFsStorage({
     file.mimetype === 'image/png' ||
     file.mimetype === 'image/gif' ||
     file.mimetype === 'image/tiff' ||
-    file.mimetype === 'image/bmp'
+    file.mimetype === 'image/bmp' ||
+    file.mimetype === 'video/mp4' ||
+    file.mimetype === 'video/mov' ||
+    file.mimetype === 'video/wmv' ||
+    file.mimetype === 'video/avi' ||
+    file.mimetype === 'video/mkv' ||
+    file.mimetype === 'video/flv' ||
+    file.mimetype === 'application/octet-stream' // for the browser unknown file types
     ){
       return {
         bucketName: "photos"

@@ -69,18 +69,20 @@ export async function addStone(req, res, next) {
       throw error;
     }
     const newStone = await StoneModel.create(newStoneData);
+    const newStoneId = newStone._id
 
     // CHECK MEDIA START //
     if (req.file) {
-      await ProjectModel.findByIdAndUpdate(
-        projectId,
+      console.log('req.file: ', req.file);
+      await StoneModel.findByIdAndUpdate(
+        newStoneId,
         { media: `${BE_HOST}/media/${req.file.id}` },
         { new: true }
       );
     }
     // else {
-    //   await ProjectModel.findByIdAndUpdate(
-    //     projectId,
+    //   await StoneModel.findByIdAndUpdate(
+    //     newStoneId,
     //     { media: `${BE_HOST}/media/63eb4e30424b07fc2e90d5b1` },
     //     { new: true }
     //   );
@@ -88,7 +90,7 @@ export async function addStone(req, res, next) {
     // CHECK MEDIA END //
 
     const pushIntoProject = await ProjectModel.findByIdAndUpdate(projectId, {
-      $push: { stones: newStone._id },
+      $push: { stones: newStoneId },
     });
 
     restOfTheTeam.map(async (member) => {
