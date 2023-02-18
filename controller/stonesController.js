@@ -34,7 +34,7 @@ export async function getOneStone(req, res, next) {
   try {
     // const projectId = req.body.projectId;
     // const project = await ProjectModel.findById(projectId).populate("stones");
-    console.log(req.params);
+    // console.log(req.params);
     const stoneId = req.params.stoneId;
     const stone = await StoneModel.findById(stoneId).populate("team");
     res.status(200).json({
@@ -121,14 +121,20 @@ export async function addStone(req, res, next) {
 // Edit an existed stone inside a project
 export async function updateStone(req, res, next) {
   try {
-    const projectId = req.body.projectId;
+    const newStoneData = JSON.parse(req.body.data);
+    console.log("newStoneData: ", newStoneData);
+    const projectId = newStoneData.projectId;
+    const stoneId = newStoneData.stoneId
+    const userId = newStoneData.userId;
     const project = await ProjectModel.findById(projectId);
-    const userId = req.body.userId;
+    const stone = await StoneModel.findById(stoneId)
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
     const team = project.team;
     console.log("Team: ", team);
+    console.log("ICH BIN HIER");
     const restOfTheTeam = team.filter((member) => member.toString() !== userId);
+    console.log("restOfTheTeam: ", restOfTheTeam);
 
     if (!team.includes(userId)) {
       const error = new Error(
@@ -138,11 +144,24 @@ export async function updateStone(req, res, next) {
       throw error;
     } else {
       const editedStone = await StoneModel.findByIdAndUpdate(
-        req.params.stoneId,
-        req.body,
+        stoneId,
+        newStoneData,
         { new: true }
       );
+
+     // CHECK MEDIA START //
+    if (req.file) {
+      console.log('req.file: ', req.file);
+      await StoneModel.findByIdAndUpdate(
+        stoneId,
+        { media: `${BE_HOST}/media/${req.file.id}` },
+        { new: true }
+      );
+    }
+    // CHECK MEDIA END //
+
       restOfTheTeam.map(async (member) => {
+        console.log("member: ", member);
         const notification = await NotificationModel.create({
           receiver: member,
           notText:
@@ -162,7 +181,9 @@ export async function updateStone(req, res, next) {
         data: editedStone,
       });
     }
-  } catch (error) {}
+  } catch (error) {
+    next()
+  }
 }
 
 export async function deleteStone(req, res, next) {
