@@ -254,7 +254,7 @@ export async function checkLogin(req, res, next) {
       }
     }
   ]);
-  console.log(user.conversations);
+
     console.log("Token in Cookie is valid. User is loggedin");
     res
       .status(200)
@@ -460,8 +460,8 @@ export async function updateUser(req, res, next) {
     const id = req.params.id;
     let oldUserData = await UserModel.findById(id);
     // DEFINE NEEDED VARIABLES //
-    console.log('req.body: ', JSON.parse(req.body.data));
-    console.log('req.file: ', req.file);
+    // console.log('req.body: ', JSON.parse(req.body.data));
+    // console.log('req.file: ', req.file);
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START //

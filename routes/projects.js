@@ -16,6 +16,7 @@ import {
   getProject,
   updateProject,
   deleteProject,
+  getStarProjects
 } from "../controller/projectsController.js";
 
 import { auth } from "../middleware/auth.js";
@@ -26,6 +27,7 @@ import { auth } from "../middleware/auth.js";
 const router = express.Router();
 
 router.route("/").get(getProjects);
+router.route("/news").post(getStarProjects);
 
 router.route("/add").post(upload.single('thumbnail'), addProject);
 
