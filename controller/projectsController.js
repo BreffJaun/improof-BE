@@ -563,10 +563,10 @@ export async function deleteProject(req, res, next) {
 export async function getStarProjects(req, res, next) {
   try {
     const starList = req.body
-    console.log("body", req.body);
+    // console.log("body", req.body);
     let starProjects = []
     for(let i=0 ; i < starList.length ; i++){   
-      console.log("hallo");
+      // console.log("hallo");
       const newPro = await ProjectModel.findById(starList[i]).populate("team").populate(
         {
           path: "stones",
@@ -575,10 +575,10 @@ export async function getStarProjects(req, res, next) {
             model: UserModel
           }
         }) 
-      console.log("NEWPROJECT", newPro);
+      // console.log("NEWPROJECT", newPro);
       starProjects.push(newPro)
     }
-    console.log("STARPROJECT",starProjects);
+    // console.log("STARPROJECT",starProjects);
     res.json({status:true, data:starProjects})    
   } catch (error) {
     next(error)

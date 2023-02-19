@@ -76,7 +76,10 @@ export async function addStone(req, res, next) {
       console.log('req.file: ', req.file);
       await StoneModel.findByIdAndUpdate(
         newStoneId,
-        { media: `${BE_HOST}/media/${req.file.id}` },
+        { 
+        media: `${BE_HOST}/media/${req.file.id}`,
+        contentType: req.file.contentType
+        },
         { new: true }
       );
     }
@@ -131,10 +134,7 @@ export async function updateStone(req, res, next) {
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
     const team = project.team;
-    console.log("Team: ", team);
-    console.log("ICH BIN HIER");
     const restOfTheTeam = team.filter((member) => member.toString() !== userId);
-    console.log("restOfTheTeam: ", restOfTheTeam);
 
     if (!team.includes(userId)) {
       const error = new Error(
@@ -154,14 +154,16 @@ export async function updateStone(req, res, next) {
       console.log('req.file: ', req.file);
       await StoneModel.findByIdAndUpdate(
         stoneId,
-        { media: `${BE_HOST}/media/${req.file.id}` },
+        { 
+          media: `${BE_HOST}/media/${req.file.id}`,
+          contentType: req.file.contentType      
+        },
         { new: true }
       );
     }
     // CHECK MEDIA END //
 
       restOfTheTeam.map(async (member) => {
-        console.log("member: ", member);
         const notification = await NotificationModel.create({
           receiver: member,
           notText:

@@ -8,6 +8,7 @@ const stoneSchema = new Schema(
     description: { type: String, required: false },
     kind: { type: String, required: true },
     media: [{ type: String }],
+    contentType: {type: String, default: ""},
     team: [{ type: Schema.Types.ObjectId, ref: "User" }],
   },
   { strictQuery: true, timestamps: true }
