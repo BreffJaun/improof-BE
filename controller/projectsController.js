@@ -559,7 +559,7 @@ export async function deleteProject(req, res, next) {
   }
 }
 
-
+// GET STAR PROJECTS
 export async function getStarProjects(req, res, next) {
   try {
     const starList = req.body
