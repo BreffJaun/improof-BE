@@ -433,14 +433,15 @@ export async function updateProject(req, res, next) {
             });
           });
         });
-        // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION END //
-        const project = await ProjectModel.findByIdAndUpdate(
-          projectId,
-          { team: newTeam },
-          { new: true }
-        );
-        oldProjectData = project;
       }
+      // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION END //
+      const project = await ProjectModel.findByIdAndUpdate(
+        projectId,
+        { team: newTeam },
+        { new: true }
+      );
+      oldProjectData = project;
+      console.log("project: ", project);
     }
     // CHECK TEAM END //
 
@@ -483,11 +484,12 @@ export async function updateProject(req, res, next) {
     // CHECK STONES BEGIN //
 
     // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //
-
+    
     const updatedProject = await ProjectModel.findById(projectId).populate([
       "team",
       "stones",
     ]);
+    // console.log("updatedProject: ", updatedProject);
     res.status(200).json({
       message: "Update was SUCCESSFUL!",
       status: true,
