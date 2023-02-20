@@ -7,7 +7,7 @@ const projectSchema = new Schema(
     name: { type: String, required: true },
     description: { type: String, required: true },
     thumbnail: { type: String, default: "http://localhost:2404/media/63f337eba0ba86c3d1b35c06" },
-    color: { type: String, default: "bg-gO" },
+    color: [{ type: String}],
     category: { type: String, default: "" },
     team: [{ type: Schema.Types.ObjectId, ref: "User" }],
     inviteOthers: [{ type: String }],
