@@ -76,7 +76,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [FE_HOST, "http://127.0.0.1:5173"], // fill in here render address
+    origin: ["https://improof.onrender.com", "http://127.0.0.1:5173", "http://localhost:5173"], // fill in here render address
     // if you want to add more adresses in cors, make an array with single strings.
     credentials: true,
   })
