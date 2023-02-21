@@ -316,7 +316,7 @@ export async function forgotPassword(req, res, next) {
       for your 'improof' account</p>
 
       <p style="background-color: orange; border-radius: 7px; width: 120px; height: 20px; text-decoration: none;">
-      <a href="${BE_HOST}/users/reset/${verifyToken}">
+      <a href="https://www.improof-be.onrender.com/users/reset/${verifyToken}">
       Reset password</a></p>      
     
       <p>If you did not initiate this request, please contact 
