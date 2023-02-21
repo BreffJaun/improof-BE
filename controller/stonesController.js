@@ -13,6 +13,9 @@ import UserModel from "../models/userModel.js";
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
 const BE_HOST = process.env.BE_HOST;
 const FE_HOST = process.env.FE_HOST;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET
 
 //========================
 
@@ -81,8 +84,11 @@ export async function addStone(req, res, next) {
         api_key: CLOUDINARY_API_KEY,
         api_secret: CLOUDINARY_API_SECRET
       });
+      console.log("req.file: ", req.file.path);
       const absFilePath = __dirname+"../"+req.file.path;
-      const response = await cloudinary.uploader.upload(absFilePath, {use_filename: true});
+      const response = await cloudinary.uploader.upload(absFilePath, {
+        resource_type: "auto",
+        use_filename: true});
       unlink(absFilePath);
       await StoneModel.findByIdAndUpdate(newStoneId, {
         media: response.secure_url
