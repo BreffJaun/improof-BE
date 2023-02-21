@@ -7,7 +7,7 @@ const stoneSchema = new Schema(
     title: { type: String, required: true },
     description: { type: String, required: false },
     kind: { type: String, required: true },
-    media: [{ type: String }],
+    media: [{ type: String, default: ""}],
     contentType: {type: String, default: ""},
     team: [{ type: Schema.Types.ObjectId, ref: "User" }],
   },
