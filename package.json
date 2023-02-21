@@ -27,5 +27,8 @@
     "watch": "nodemon server.js",
     "clean": "node seeding/clean_db.js",
     "seed": "node seeding/seed_db.js"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
