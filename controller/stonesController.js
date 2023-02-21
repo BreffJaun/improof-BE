@@ -1,5 +1,8 @@
-import * as dotenv from "dotenv";
-dotenv.config();
+import * as dotenv from "dotenv";dotenv.config();
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+import {v2 as cloudinary} from 'cloudinary';
+import {unlink} from 'fs/promises';
 
 // I M P O R T:  F U N C T I O N S
 import StoneModel from "../models/stoneModel.js";
@@ -10,6 +13,9 @@ import UserModel from "../models/userModel.js";
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
 const BE_HOST = process.env.BE_HOST;
 const FE_HOST = process.env.FE_HOST;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET
 
 //========================
 
@@ -73,23 +79,21 @@ export async function addStone(req, res, next) {
 
     // CHECK MEDIA START //
     if (req.file) {
-      console.log('req.file: ', req.file);
-      await StoneModel.findByIdAndUpdate(
-        newStoneId,
-        { 
-        media: `${BE_HOST}/media/${req.file.id}`,
-        contentType: req.file.contentType
-        },
-        { new: true }
-      );
+      cloudinary.config({
+        cloud_name: CLOUDINARY_CLOUD_NAME,
+        api_key: CLOUDINARY_API_KEY,
+        api_secret: CLOUDINARY_API_SECRET
+      });
+      console.log("req.file: ", req.file.path);
+      const absFilePath = __dirname+"../"+req.file.path;
+      const response = await cloudinary.uploader.upload(absFilePath, {
+        resource_type: "auto",
+        use_filename: true});
+      unlink(absFilePath);
+      await StoneModel.findByIdAndUpdate(newStoneId, {
+        media: response.secure_url
+      });
     }
-    // else {
-    //   await StoneModel.findByIdAndUpdate(
-    //     newStoneId,
-    //     { media: `${BE_HOST}/media/63eb4e30424b07fc2e90d5b1` },
-    //     { new: true }
-    //   );
-    // }
     // CHECK MEDIA END //
 
     const pushIntoProject = await ProjectModel.findByIdAndUpdate(projectId, {
@@ -150,16 +154,18 @@ export async function updateStone(req, res, next) {
       );
 
      // CHECK MEDIA START //
-    if (req.file) {
-      console.log('req.file: ', req.file);
-      await StoneModel.findByIdAndUpdate(
-        stoneId,
-        { 
-          media: `${BE_HOST}/media/${req.file.id}`,
-          contentType: req.file.contentType      
-        },
-        { new: true }
-      );
+     if (req.file) {
+      cloudinary.config({
+        cloud_name: CLOUDINARY_CLOUD_NAME,
+        api_key: CLOUDINARY_API_KEY,
+        api_secret: CLOUDINARY_API_SECRET
+      });
+      const absFilePath = __dirname+"../"+req.file.path;
+      const response = await cloudinary.uploader.upload(absFilePath, {use_filename: true});
+      unlink(absFilePath);
+      await StoneModel.findByIdAndUpdate(stoneId, {
+        media: response.secure_url
+      });
     }
     // CHECK MEDIA END //
 

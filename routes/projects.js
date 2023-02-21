@@ -3,8 +3,8 @@ import express from "express";
 import multer from "multer";
 
 // I M P O R T:  F U N C T I O N S
-import { validateRequest } from "../middleware/validator.js";
-import { projectValidator } from "../middleware/projectValidator.js";
+// import { validateRequest } from "../middleware/validator.js";
+// import { projectValidator } from "../middleware/projectValidator.js";
 import { upload } from "./medias.js";
 
 // I M P O R T:  C O N T R O L L E R

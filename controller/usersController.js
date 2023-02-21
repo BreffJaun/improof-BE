@@ -3,6 +3,10 @@ import * as dotenv from "dotenv"; dotenv.config();
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import sgMail from "@sendgrid/mail";
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+import {v2 as cloudinary} from 'cloudinary';
+import {unlink} from 'fs/promises';
 
 // I M P O R T:  F U N C T I O N S
 import UserModel from "../models/userModel.js";
@@ -14,6 +18,9 @@ import MessageModel from "../models/messageModel.js";
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
 const SENDGRID_KEY = process.env.SENDGRID_API_KEY;
 const SENDGRID_EMAIL = process.env.SENDGRID_EMAIL;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET
 const BE_HOST = process.env.BE_HOST;
 const FE_HOST = process.env.FE_HOST;
 
@@ -42,6 +49,7 @@ export async function addUser(req, res, next) {
       newUser.profile.firstName[0].toUpperCase() +
       newUser.profile.lastName[0].toUpperCase();
     let createdUser;
+    
     if (newUser.profile.isTalent) {
       // newUser.meta = ["c-DB2","bg-gDB"]
       createdUser = await UserModel.create({...newUser,
@@ -50,14 +58,13 @@ export async function addUser(req, res, next) {
       });
       newCreatedUser = createdUser
       const userId = newCreatedUser._id
-      // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
+    // CREATE NOTIFICATION FOR TO INFORM THE USER START //
     const newNotification = await NotificationModel.create({
       receiver: userId,
       notText: `Fill out your profile to be found better by recruiters or other talents!`
     });
     const updatedUser = await UserModel.findByIdAndUpdate(userId, {$push: {notifications: newNotification._id}});
-    
-    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
+    // CREATE NOTIFICATION FOR TO INFORM THE USER END //
 
     }
     if (newUser.profile.isRecruiter) {
@@ -66,13 +73,13 @@ export async function addUser(req, res, next) {
       });
       newCreatedUser = createdUser
       const userId = newCreatedUser._id
-      // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
+      // CREATE NOTIFICATION FOR TO INFORM THE USER START //
     const newNotification = await NotificationModel.create({
       receiver: userId,
       notText: `Fill out your profile to give Talents a better impression of you!`
     });
     const updatedUser = await UserModel.findByIdAndUpdate(userId, {$push: {notifications: newNotification._id}});
-    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
+    // CREATE NOTIFICATION FOR TO INFORM THE USER END //
     }
 
     // VERIFY EMAIL IMPLEMENT BEGIN //
@@ -460,8 +467,6 @@ export async function updateUser(req, res, next) {
     const id = req.params.id;
     let oldUserData = await UserModel.findById(id);
     // DEFINE NEEDED VARIABLES //
-    // console.log('req.body: ', JSON.parse(req.body.data));
-    // console.log('req.file: ', req.file);
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START //
@@ -534,7 +539,7 @@ export async function updateUser(req, res, next) {
       const hashedPassword = await bcrypt.hash(userData.profile.password, 10);
       const user = await UserModel.findByIdAndUpdate(
         id,
-        { profile: { ...oldUserData.profile, password: hashedPassword } },
+        { profile: {...oldUserData.profile, password: hashedPassword } },
         { new: true }
       );
       oldUserData = user;
@@ -542,30 +547,19 @@ export async function updateUser(req, res, next) {
     // CHECK PASSWORD END //
 
     // CHECK AVATAR BEGIN //
-    // MULTER VERSION
-    // if (req.file) {
-    //   const user = await UserModel.findByIdAndUpdate(
-    //     id,
-    //     {
-    //       profile: {
-    //         ...oldUserData.profile,
-    //         avatar: `${BE_HOST}/${req.file.path}`,
-    //       },
-    //     },
-    //     { new: true }
-    //   );
-    //   oldUserData = user;
-    // }
-
-    // GRIDFS VERSION
     if (req.file) {
+      cloudinary.config({
+        cloud_name: CLOUDINARY_CLOUD_NAME,
+        api_key: CLOUDINARY_API_KEY,
+        api_secret: CLOUDINARY_API_SECRET
+      });
+      const absFilePath = __dirname+"../"+req.file.path;
+      const response = await cloudinary.uploader.upload(absFilePath, {use_filename: true});
+      unlink(absFilePath);
       const user = await UserModel.findByIdAndUpdate(
         id,
         {
-          profile: {
-            ...oldUserData.profile,
-            avatar: `${BE_HOST}/media/${req.file.id}`,
-          },
+          "profile.avatar": response.secure_url 
         },
         { new: true }
       );
