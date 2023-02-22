@@ -137,6 +137,7 @@ export async function verifyEmail(req, res, next) {
     const updatedUser = await UserModel.findByIdAndUpdate(id, {
       meta: { ...user.meta, isVerified: true },
     });
+    console.log();
     // res.status(200).json({
     //   message: "E-Mail is now SUCCESSFULLY verified!",
     //   status: true,

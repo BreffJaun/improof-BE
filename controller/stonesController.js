@@ -84,14 +84,14 @@ export async function addStone(req, res, next) {
         api_key: CLOUDINARY_API_KEY,
         api_secret: CLOUDINARY_API_SECRET
       });
-      console.log("req.file: ", req.file.path);
+      console.log("req.file: ", req.file);
       const absFilePath = __dirname+"../"+req.file.path;
       const response = await cloudinary.uploader.upload(absFilePath, {
         resource_type: "auto",
         use_filename: true});
       unlink(absFilePath);
       await StoneModel.findByIdAndUpdate(newStoneId, {
-        media: response.secure_url
+        media: response.secure_url, contentType: req.file.mimetype
       });
     }
     // CHECK MEDIA END //
@@ -155,16 +155,19 @@ export async function updateStone(req, res, next) {
 
      // CHECK MEDIA START //
      if (req.file) {
+      console.log("req.file: ", req.file);
       cloudinary.config({
         cloud_name: CLOUDINARY_CLOUD_NAME,
         api_key: CLOUDINARY_API_KEY,
         api_secret: CLOUDINARY_API_SECRET
       });
       const absFilePath = __dirname+"../"+req.file.path;
-      const response = await cloudinary.uploader.upload(absFilePath, {use_filename: true});
+      const response = await cloudinary.uploader.upload(absFilePath, {
+        resource_type: "auto",
+        use_filename: true});
       unlink(absFilePath);
       await StoneModel.findByIdAndUpdate(stoneId, {
-        media: response.secure_url
+        media: response.secure_url, contentType: req.file.mimetype
       });
     }
     // CHECK MEDIA END //
