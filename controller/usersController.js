@@ -143,7 +143,7 @@ export async function verifyEmail(req, res, next) {
     //   data: "",
     //   user: updatedUser,
     // });
-    res.redirect(`https://improof.onrender.com/login`);
+    res.redirect(`https://improof.onrender.com`);
     // if we have a frontend, we can direct the successful verification to the login page
   } catch (err) {
     next(err);
