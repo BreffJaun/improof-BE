@@ -105,7 +105,7 @@ export async function addUser(req, res, next) {
       your projects, please verify your email.</p>
 
       <p style="background-color: orange; border-radius: 7px; width: 80px; height: 20px; text-decoration: none;">
-      <a href="${BE_HOST}/users/verify/${verifyToken}">
+      <a href="https://improof-be.onrender.com/users/verify/${verifyToken}">
       Verify now</a></p>      
     
       <p>Welcome to improof!<br>
