@@ -121,7 +121,7 @@ export async function addProject(req, res, next) {
         Please register here
         <a href="${FE_HOST}/register">
         Register</a></p>      
-        <p>and contact <a href="${FE_HOST}/myprofile/${user._id}">
+        <p>and contact <a href="https://improof-fe.vercel.app/myprofile/${user._id}">
         ${userName}</a></p>
       
         <p>Your 'improof' Team </p>
@@ -497,7 +497,7 @@ export async function updateProject(req, res, next) {
         Please register here
         <a href="${FE_HOST}/register">
         Register</a></p>      
-        <p>and contact <a href="${FE_HOST}/myprofile/${user._id}">
+        <p>and contact <a href="https://improof-fe.vercel.app/myprofile/${user._id}">
         ${user.profile.firstName + " " + user.profile.lastName}</a></p>
       
         <p>Your 'improof' Team </p>
