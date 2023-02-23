@@ -411,6 +411,13 @@ export async function updateProject(req, res, next) {
         (member) => !oldTeam.includes(member)
       );
       // console.log("checkNewMembers: " , checkNewMembers);
+      const deletedMembers = oldTeam.filter(
+        (member) => !newTeam.includes(member)
+      );
+
+      console.log("oldTeam: ", oldTeam);
+      console.log("newTeam: ", newTeam);
+      console.log("deletedMembers: ", deletedMembers);
 
       // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION START //
       if (checkNewMembers.length > 0) {
@@ -442,6 +449,16 @@ export async function updateProject(req, res, next) {
         });
       }
       // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION END //
+      // DELETE PROJECT FROM FORMER MEMBERS START //
+      if(deletedMembers.length > 0) {
+        deletedMembers.forEach(async (member) => {
+          await UserModel.findByIdAndUpdate(member, {
+            $pull: {myProjects: projectId}
+          })
+        })
+      }
+      // DELETE PROJECT FROM FORMER MEMBERS END //
+      
       const project = await ProjectModel.findByIdAndUpdate(
         projectId,
         { team: newTeam },
