@@ -105,10 +105,10 @@ export async function addStone(req, res, next) {
         receiver: member,
         notText:
           newStone.kind === "stepstone"
-            ? `${userName} added a new stepstone to your ~${project.name}~ project`
+            ? `${userName} added a new stepstone to ${project.name}`
             : newStone.kind === "milestone"
-            ? `${userName} added a new milestone to your ~${project.name}~ project`
-            : `** ${userName} added the endstone to your ~${project.name}~ project **`,
+            ? `${userName} added a new milestone to ${project.name}`
+            : ` ${userName} added the endstone to ${project.name}`,
       });
       await UserModel.findByIdAndUpdate(member, {
         $push: { notifications: notification._id },
@@ -177,10 +177,10 @@ export async function updateStone(req, res, next) {
           receiver: member,
           notText:
             editedStone.kind === "stepstone"
-              ? `${userName} edited a stepstone in your ~${project.name}~ project`
+              ? `${userName} edited a stepstone in ${project.name}`
               : editedStone.kind === "milestone"
-              ? `${userName} edited a milestone in your ~${project.name}~ project`
-              : `${userName} edited the endstone of your ~${project.name}~ project`,
+              ? `${userName} edited a milestone in ${project.name}`
+              : `${userName} edited the endstone of ${project.name}`,
         });
         await UserModel.findByIdAndUpdate(member, {
           $push: { notifications: notification._id },
@@ -227,10 +227,10 @@ export async function deleteStone(req, res, next) {
           receiver: member,
           notText:
             stoneToBeDeleted.kind === "stepstone"
-              ? `${userName} deleted a stepstone in your ~${project.name}~ project`
+              ? `${userName} deleted a stepstone in ${project.name}`
               : stoneToBeDeleted.kind === "milestone"
-              ? `${userName} deleted a milestone in your ~${project.name}~ project`
-              : `${userName} deleted the endstone of your ~${project.name}~ project`,
+              ? `${userName} deleted a milestone in ${project.name}`
+              : `${userName} deleted the endstone of ${project.name}`,
         });
         await UserModel.findByIdAndUpdate(member, {
           $push: { notifications: notification._id },

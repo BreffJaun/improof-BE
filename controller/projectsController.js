@@ -4,10 +4,10 @@ dotenv.config();
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import sgMail from "@sendgrid/mail";
-import * as url from 'url';
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
-import {v2 as cloudinary} from 'cloudinary';
-import {unlink} from 'fs/promises';
+import * as url from "url";
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+import { v2 as cloudinary } from "cloudinary";
+import { unlink } from "fs/promises";
 
 // I M P O R T:  F U N C T I O N S
 import ProjectModel from "../models/projectModel.js";
@@ -19,9 +19,9 @@ import NotificationModel from "../models/notificationModel.js";
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
 const SENDGRID_KEY = process.env.SENDGRID_API_KEY;
 const SENDGRID_EMAIL = process.env.SENDGRID_EMAIL;
-const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME
-const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY
-const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const BE_HOST = process.env.BE_HOST;
 const FE_HOST = process.env.FE_HOST;
 
@@ -61,17 +61,20 @@ export async function addProject(req, res, next) {
       cloudinary.config({
         cloud_name: CLOUDINARY_CLOUD_NAME,
         api_key: CLOUDINARY_API_KEY,
-        api_secret: CLOUDINARY_API_SECRET
+        api_secret: CLOUDINARY_API_SECRET,
       });
-      const absFilePath = __dirname+"../"+req.file.path;
-      const response = await cloudinary.uploader.upload(absFilePath, {use_filename: true});
+      const absFilePath = __dirname + "../" + req.file.path;
+      const response = await cloudinary.uploader.upload(absFilePath, {
+        use_filename: true,
+      });
       unlink(absFilePath);
       await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail: response.secure_url
+        thumbnail: response.secure_url,
       });
     } else {
       await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail: "https://res.cloudinary.com/dmqqemd9u/image/upload/v1676992849/improof_A100_qa4pkg.png"
+        thumbnail:
+          "https://res.cloudinary.com/dmqqemd9u/image/upload/v1676992849/improof_A100_qa4pkg.png",
       });
     }
     // THUMBNAIL IMPLEMENT END //
@@ -187,7 +190,8 @@ export async function followProject(req, res, next) {
       projectMembers.map(async (member) => {
         const newNotification = await NotificationModel.create({
           receiver: member,
-          notText: `A recruiter follows from now on your project "${projectName}"! Could be worse for you 😎`,
+          // notText: `A recruiter follows from now on your project "${projectName}"! Could be worse for you 😎`,
+          notText: `A recruiter just followed your project "${projectName}"!`,
         });
         await UserModel.findByIdAndUpdate(member, {
           $push: { notifications: newNotification._id },
@@ -198,7 +202,7 @@ export async function followProject(req, res, next) {
       projectMembers.map(async (member) => {
         const newNotification = await NotificationModel.create({
           receiver: member,
-          notText: `${userName} follows from now on your project "${projectName}"! Keep it up 🥳`,
+          notText: `${userName} follows now your project "${projectName}"!`,
         });
         await UserModel.findByIdAndUpdate(member, {
           $push: { notifications: newNotification._id },
@@ -361,13 +365,15 @@ export async function updateProject(req, res, next) {
       cloudinary.config({
         cloud_name: CLOUDINARY_CLOUD_NAME,
         api_key: CLOUDINARY_API_KEY,
-        api_secret: CLOUDINARY_API_SECRET
+        api_secret: CLOUDINARY_API_SECRET,
       });
-      const absFilePath = __dirname+"../"+req.file.path;
-      const response = await cloudinary.uploader.upload(absFilePath, {use_filename: true});
+      const absFilePath = __dirname + "../" + req.file.path;
+      const response = await cloudinary.uploader.upload(absFilePath, {
+        use_filename: true,
+      });
       unlink(absFilePath);
       const project = await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail: response.secure_url
+        thumbnail: response.secure_url,
       });
       oldProjectData = project;
     }
@@ -508,7 +514,7 @@ export async function updateProject(req, res, next) {
     // CHECK STONES BEGIN //
 
     // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //
-    
+
     const updatedProject = await ProjectModel.findById(projectId).populate([
       "team",
       "stones",
@@ -588,25 +594,26 @@ export async function deleteProject(req, res, next) {
 // GET STAR PROJECTS
 export async function getStarProjects(req, res, next) {
   try {
-    const starList = req.body
+    const starList = req.body;
     // console.log("body", req.body);
-    let starProjects = []
-    for(let i=0 ; i < starList.length ; i++){   
+    let starProjects = [];
+    for (let i = 0; i < starList.length; i++) {
       // console.log("hallo");
-      const newPro = await ProjectModel.findById(starList[i]).populate("team").populate(
-        {
+      const newPro = await ProjectModel.findById(starList[i])
+        .populate("team")
+        .populate({
           path: "stones",
           populate: {
             path: "team",
-            model: UserModel
-          }
-        }) 
+            model: UserModel,
+          },
+        });
       // console.log("NEWPROJECT", newPro);
-      starProjects.push(newPro)
+      starProjects.push(newPro);
     }
     // console.log("STARPROJECT",starProjects);
-    res.json({status:true, data:starProjects})    
+    res.json({ status: true, data: starProjects });
   } catch (error) {
-    next(error)
+    next(error);
   }
 }
