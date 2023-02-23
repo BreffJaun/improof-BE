@@ -154,7 +154,7 @@ export async function updateStone(req, res, next) {
       );
 
      // CHECK MEDIA START //
-     if (req.file) {
+    if (req.file) {
       console.log("req.file: ", req.file);
       cloudinary.config({
         cloud_name: CLOUDINARY_CLOUD_NAME,

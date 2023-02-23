@@ -56,7 +56,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["https://improof.onrender.com", "http://127.0.0.1:5173", "http://localhost:5173"], 
+    origin: ["https://improof.onrender.com", "http://127.0.0.1:5173", "http://localhost:5173", "https://improof-fe.vercel.app"], 
     credentials: true,
   })
 );
