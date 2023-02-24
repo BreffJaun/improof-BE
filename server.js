@@ -16,6 +16,7 @@ import messageRouter from "./routes/messages.js";
 import conversationRouter from "./routes/conversations.js";
 import wrongRoutes from "./routes/wrongPath.js";
 import stoneRouter from "./routes/stones.js";
+import counterRouter from "./routes/counters.js";
 
 // I M P O R T:  E R R O R  H A N D L E R
 import { errorHandler } from "./middleware/errorhandler.js";
@@ -63,6 +64,9 @@ app.use(
 app.use(morgan("dev"));
 
 // ROUTER MIDDLEWARE
+// COUNTER
+app.use("/counters", counterRouter);
+
 // USERS
 app.use("/users", userRouter);
 
