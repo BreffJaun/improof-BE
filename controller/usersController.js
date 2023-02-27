@@ -84,6 +84,7 @@ export async function addUser(req, res, next) {
           isRecruiter: true,
           initials: initials,
         },
+        meta: { colorTheme: ["c-GR1", "bg-gGR1"] },
       });
       newCreatedUser = createdUser;
       const userId = newCreatedUser._id;
