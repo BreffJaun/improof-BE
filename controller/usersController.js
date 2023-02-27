@@ -962,12 +962,16 @@ export async function deleteUser(req, res, next) {
 
 export async function setFirstLogin(req, res, next) {
   try {
-    console.log(userId);
     const userId = req.params.userId
+    const user = await UserModel.findById(userId)
+    console.log(userId);
     await UserModel.findByIdAndUpdate(userId, {
       meta:{
-      firstLogin:false, loginCount:2
+        ...user.meta,
+        firstLogin:false,
+        loginCount:2
       }
+      
     })
     res.json({message:"alles ok!"})
   } catch (error) {

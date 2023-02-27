@@ -63,9 +63,9 @@ router.route("/follow/add").patch(auth, followUser);
 
 router.route("/follow/delete").delete(auth, leadUser);
 
-userRouter.route("/darkmode").patch(setMode);
+router.route("/darkmode").patch(setMode);
 
-userRouter.route("/firstlogin/:userId").patch(setFirstLogin);
+router.route("/firstlogin/:userId").patch(setFirstLogin);
 
 router
   .route("/:id")
