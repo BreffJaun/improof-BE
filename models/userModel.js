@@ -10,7 +10,7 @@ const userSchema = new Schema(
       lastName: { type: String, required: true },
       email: { type: String, required: true, unique: true },
       password: { type: String, required: true },
-      avatar: { type: String, default: "https://res.cloudinary.com/dmqqemd9u/image/upload/v1676992849/improof_A100_qa4pkg.png"},
+      avatar: { type: String, default: ""},
       description: { type: String, default: "" },
       goal: { type: String, default: "" },
       position: { type: String, default: "" },

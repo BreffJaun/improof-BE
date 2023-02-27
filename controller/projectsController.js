@@ -71,12 +71,7 @@ export async function addProject(req, res, next) {
       await ProjectModel.findByIdAndUpdate(projectId, {
         thumbnail: response.secure_url,
       });
-    } else {
-      await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail:
-          "https://res.cloudinary.com/dmqqemd9u/image/upload/v1676992849/improof_A100_qa4pkg.png",
-      });
-    }
+    } 
     // THUMBNAIL IMPLEMENT END //
 
     // ADD PROJECT TO EVERY TEAMMEMBER
