@@ -37,40 +37,40 @@ import { auth } from "../middleware/auth.js";
 // ========================
 
 // C R E A T E   R O U T E S
-const userRouter = express.Router();
+const router = express.Router();
 
-userRouter.route("/").get(getUsers);
+router.route("/").get(getUsers);
 
-userRouter
+router
   .route("/add")
-  .post(upload.single("avatar"), userValidator, validateRequest, addUser);
+  .post(userValidator, validateRequest, addUser);
 
-userRouter.route("/verify/:token").get(verifyEmail);
+router.route("/verify/:token").get(verifyEmail);
 
-userRouter.route("/login").post(login);
+router.route("/login").post(login);
 
-userRouter.route("/checklogin").get(checkLogin);
+router.route("/checklogin").get(checkLogin);
 
-userRouter.route("/logout").get(logout);
+router.route("/logout").get(logout);
 
-userRouter.route("/forgotpassword").post(forgotPassword);
+router.route("/forgotpassword").post(forgotPassword);
 
-userRouter.route("/reset/:token").get(verifyResetToken);
+router.route("/reset/:token").get(verifyResetToken);
 
-userRouter.route("/setnewpassword").post(setNewPassword);
+router.route("/setnewpassword").post(setNewPassword);
 
-userRouter.route("/follow/add").patch(auth, followUser);
+router.route("/follow/add").patch(auth, followUser);
 
-userRouter.route("/follow/delete").delete(auth, leadUser);
+router.route("/follow/delete").delete(auth, leadUser);
 
 userRouter.route("/darkmode").patch(setMode);
 
 userRouter.route("/firstlogin/:userId").patch(setFirstLogin);
 
-userRouter
+router
   .route("/:id")
   .get(auth, getUser)
   .patch(upload.single("avatar"), auth, updateUser)
   .delete(auth, deleteUser);
 
-export default userRouter;
+export default router;

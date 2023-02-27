@@ -4,6 +4,10 @@ dotenv.config();
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import sgMail from "@sendgrid/mail";
+import * as url from "url";
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+import { v2 as cloudinary } from "cloudinary";
+import { unlink } from "fs/promises";
 
 // I M P O R T:  F U N C T I O N S
 import ProjectModel from "../models/projectModel.js";
@@ -15,6 +19,9 @@ import NotificationModel from "../models/notificationModel.js";
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
 const SENDGRID_KEY = process.env.SENDGRID_API_KEY;
 const SENDGRID_EMAIL = process.env.SENDGRID_EMAIL;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const BE_HOST = process.env.BE_HOST;
 const FE_HOST = process.env.FE_HOST;
 
@@ -49,31 +56,23 @@ export async function addProject(req, res, next) {
     const newProject = await ProjectModel.create(projectData);
     const projectId = newProject._id;
 
-    // AVATAR IMPLEMENT BEGIN //
-    // MULTER VERSION
-    // if (req.file) {
-    //   await ProjectModel.findByIdAndUpdate(projectId, {
-    //     thumbnail: `${BE_HOST}/${req.file.path}`,
-    //   });
-    // } else {
-    //   await ProjectModel.findByIdAndUpdate(projectId, {
-    //     thumbnail: `${BE_HOST}/assets/images/coffypaste_icon_avatar.png`,
-    //   });
-    // }
-
-    // GRIDFS VERSION
+    // THUMBNAIL IMPLEMENT BEGIN //
     if (req.file) {
+      cloudinary.config({
+        cloud_name: CLOUDINARY_CLOUD_NAME,
+        api_key: CLOUDINARY_API_KEY,
+        api_secret: CLOUDINARY_API_SECRET,
+      });
+      const absFilePath = __dirname + "../" + req.file.path;
+      const response = await cloudinary.uploader.upload(absFilePath, {
+        use_filename: true,
+      });
+      unlink(absFilePath);
       await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail: `${BE_HOST}/media/${req.file.id}`,
+        thumbnail: response.secure_url,
       });
     } 
-    // else {
-    //   console.log('IM REQ.FILE ELSE');
-    //   await ProjectModel.findByIdAndUpdate(projectId, {
-    //     thumbnail: `${BE_HOST}/media/63eb4e30424b07fc2e90d5b1`,
-    //   });
-    // }
-    // AVATAR IMPLEMENT END //
+    // THUMBNAIL IMPLEMENT END //
 
     // ADD PROJECT TO EVERY TEAMMEMBER
     teamMemberIds.map(
@@ -117,7 +116,7 @@ export async function addProject(req, res, next) {
         Please register here
         <a href="${FE_HOST}/register">
         Register</a></p>      
-        <p>and contact <a href="${FE_HOST}/myprofile/${user._id}">
+        <p>and contact <a href="https://improof-fe.vercel.app/myprofile/${user._id}">
         ${userName}</a></p>
       
         <p>Your 'improof' Team </p>
@@ -186,7 +185,8 @@ export async function followProject(req, res, next) {
       projectMembers.map(async (member) => {
         const newNotification = await NotificationModel.create({
           receiver: member,
-          notText: `A recruiter follows from now on your project "${projectName}"! Could be worse for you 😎`,
+          // notText: `A recruiter follows from now on your project "${projectName}"! Could be worse for you 😎`,
+          notText: `A recruiter just followed your project "${projectName}"!`,
         });
         await UserModel.findByIdAndUpdate(member, {
           $push: { notifications: newNotification._id },
@@ -197,7 +197,7 @@ export async function followProject(req, res, next) {
       projectMembers.map(async (member) => {
         const newNotification = await NotificationModel.create({
           receiver: member,
-          notText: `${userName} follows from now on your project "${projectName}"! Keep it up 🥳`,
+          notText: `${userName} follows now your project "${projectName}"!`,
         });
         await UserModel.findByIdAndUpdate(member, {
           $push: { notifications: newNotification._id },
@@ -357,11 +357,19 @@ export async function updateProject(req, res, next) {
 
     // CHECK THUMBNAIL START //
     if (req.file) {
-      await ProjectModel.findByIdAndUpdate(
-        projectId,
-        { thumbnail: `${BE_HOST}/media/${req.file.id}` },
-        { new: true }
-      );
+      cloudinary.config({
+        cloud_name: CLOUDINARY_CLOUD_NAME,
+        api_key: CLOUDINARY_API_KEY,
+        api_secret: CLOUDINARY_API_SECRET,
+      });
+      const absFilePath = __dirname + "../" + req.file.path;
+      const response = await cloudinary.uploader.upload(absFilePath, {
+        use_filename: true,
+      });
+      unlink(absFilePath);
+      const project = await ProjectModel.findByIdAndUpdate(projectId, {
+        thumbnail: response.secure_url,
+      });
       oldProjectData = project;
     }
     // CHECK THUMBNAIL END //
@@ -404,6 +412,13 @@ export async function updateProject(req, res, next) {
         (member) => !oldTeam.includes(member)
       );
       // console.log("checkNewMembers: " , checkNewMembers);
+      const deletedMembers = oldTeam.filter(
+        (member) => !newTeam.includes(member)
+      );
+
+      console.log("oldTeam: ", oldTeam);
+      console.log("newTeam: ", newTeam);
+      console.log("deletedMembers: ", deletedMembers);
 
       // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION START //
       if (checkNewMembers.length > 0) {
@@ -435,6 +450,16 @@ export async function updateProject(req, res, next) {
         });
       }
       // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION END //
+      // DELETE PROJECT FROM FORMER MEMBERS START //
+      if(deletedMembers.length > 0) {
+        deletedMembers.forEach(async (member) => {
+          await UserModel.findByIdAndUpdate(member, {
+            $pull: {myProjects: projectId}
+          })
+        })
+      }
+      // DELETE PROJECT FROM FORMER MEMBERS END //
+      
       const project = await ProjectModel.findByIdAndUpdate(
         projectId,
         { team: newTeam },
@@ -467,7 +492,7 @@ export async function updateProject(req, res, next) {
         Please register here
         <a href="${FE_HOST}/register">
         Register</a></p>      
-        <p>and contact <a href="${FE_HOST}/myprofile/${user._id}">
+        <p>and contact <a href="https://improof-fe.vercel.app/myprofile/${user._id}">
         ${user.profile.firstName + " " + user.profile.lastName}</a></p>
       
         <p>Your 'improof' Team </p>
@@ -484,7 +509,7 @@ export async function updateProject(req, res, next) {
     // CHECK STONES BEGIN //
 
     // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //
-    
+
     const updatedProject = await ProjectModel.findById(projectId).populate([
       "team",
       "stones",
@@ -564,25 +589,26 @@ export async function deleteProject(req, res, next) {
 // GET STAR PROJECTS
 export async function getStarProjects(req, res, next) {
   try {
-    const starList = req.body
+    const starList = req.body;
     // console.log("body", req.body);
-    let starProjects = []
-    for(let i=0 ; i < starList.length ; i++){   
+    let starProjects = [];
+    for (let i = 0; i < starList.length; i++) {
       // console.log("hallo");
-      const newPro = await ProjectModel.findById(starList[i]).populate("team").populate(
-        {
+      const newPro = await ProjectModel.findById(starList[i])
+        .populate("team")
+        .populate({
           path: "stones",
           populate: {
             path: "team",
-            model: UserModel
-          }
-        }) 
+            model: UserModel,
+          },
+        });
       // console.log("NEWPROJECT", newPro);
-      starProjects.push(newPro)
+      starProjects.push(newPro);
     }
     // console.log("STARPROJECT",starProjects);
-    res.json({status:true, data:starProjects})    
+    res.json({ status: true, data: starProjects });
   } catch (error) {
-    next(error)
+    next(error);
   }
 }

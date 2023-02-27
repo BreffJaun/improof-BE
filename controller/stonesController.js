@@ -1,5 +1,9 @@
 import * as dotenv from "dotenv";
 dotenv.config();
+import * as url from "url";
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+import { v2 as cloudinary } from "cloudinary";
+import { unlink } from "fs/promises";
 
 // I M P O R T:  F U N C T I O N S
 import StoneModel from "../models/stoneModel.js";
@@ -10,6 +14,9 @@ import UserModel from "../models/userModel.js";
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
 const BE_HOST = process.env.BE_HOST;
 const FE_HOST = process.env.FE_HOST;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 //========================
 
@@ -50,8 +57,8 @@ export async function getOneStone(req, res, next) {
 // Add a new stone in a project
 export async function addStone(req, res, next) {
   try {
-    const newStoneData = JSON.parse(req.body.data)
-    const projectId = newStoneData.projectId
+    const newStoneData = JSON.parse(req.body.data);
+    const projectId = newStoneData.projectId;
     console.log("projectId: ", projectId);
     const project = await ProjectModel.findById(projectId);
     const userId = newStoneData.userId;
@@ -69,27 +76,27 @@ export async function addStone(req, res, next) {
       throw error;
     }
     const newStone = await StoneModel.create(newStoneData);
-    const newStoneId = newStone._id
+    const newStoneId = newStone._id;
 
     // CHECK MEDIA START //
     if (req.file) {
-      console.log('req.file: ', req.file);
-      await StoneModel.findByIdAndUpdate(
-        newStoneId,
-        { 
-        media: `${BE_HOST}/media/${req.file.id}`,
-        contentType: req.file.contentType
-        },
-        { new: true }
-      );
+      cloudinary.config({
+        cloud_name: CLOUDINARY_CLOUD_NAME,
+        api_key: CLOUDINARY_API_KEY,
+        api_secret: CLOUDINARY_API_SECRET,
+      });
+      console.log("req.file: ", req.file);
+      const absFilePath = __dirname + "../" + req.file.path;
+      const response = await cloudinary.uploader.upload(absFilePath, {
+        resource_type: "auto",
+        use_filename: true,
+      });
+      unlink(absFilePath);
+      await StoneModel.findByIdAndUpdate(newStoneId, {
+        media: response.secure_url,
+        contentType: req.file.mimetype,
+      });
     }
-    // else {
-    //   await StoneModel.findByIdAndUpdate(
-    //     newStoneId,
-    //     { media: `${BE_HOST}/media/63eb4e30424b07fc2e90d5b1` },
-    //     { new: true }
-    //   );
-    // }
     // CHECK MEDIA END //
 
     const pushIntoProject = await ProjectModel.findByIdAndUpdate(projectId, {
@@ -101,10 +108,10 @@ export async function addStone(req, res, next) {
         receiver: member,
         notText:
           newStone.kind === "stepstone"
-            ? `${userName} added a new stepstone to your ~${project.name}~ project`
+            ? `${userName} added a new stepstone to ${project.name}`
             : newStone.kind === "milestone"
-            ? `${userName} added a new milestone to your ~${project.name}~ project`
-            : `** ${userName} added the endstone to your ~${project.name}~ project **`,
+            ? `${userName} added a new milestone to ${project.name}`
+            : ` ${userName} added the endstone to ${project.name}`,
       });
       await UserModel.findByIdAndUpdate(member, {
         $push: { notifications: notification._id },
@@ -127,10 +134,10 @@ export async function updateStone(req, res, next) {
     const newStoneData = JSON.parse(req.body.data);
     console.log("newStoneData: ", newStoneData);
     const projectId = newStoneData.projectId;
-    const stoneId = newStoneData.stoneId
+    const stoneId = newStoneData.stoneId;
     const userId = newStoneData.userId;
     const project = await ProjectModel.findById(projectId);
-    const stone = await StoneModel.findById(stoneId)
+    const stone = await StoneModel.findById(stoneId);
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
     const team = project.team;
@@ -149,29 +156,36 @@ export async function updateStone(req, res, next) {
         { new: true }
       );
 
-     // CHECK MEDIA START //
-    if (req.file) {
-      console.log('req.file: ', req.file);
-      await StoneModel.findByIdAndUpdate(
-        stoneId,
-        { 
-          media: `${BE_HOST}/media/${req.file.id}`,
-          contentType: req.file.contentType      
-        },
-        { new: true }
-      );
-    }
-    // CHECK MEDIA END //
+      // CHECK MEDIA START //
+      if (req.file) {
+        console.log("req.file: ", req.file);
+        cloudinary.config({
+          cloud_name: CLOUDINARY_CLOUD_NAME,
+          api_key: CLOUDINARY_API_KEY,
+          api_secret: CLOUDINARY_API_SECRET,
+        });
+        const absFilePath = __dirname + "../" + req.file.path;
+        const response = await cloudinary.uploader.upload(absFilePath, {
+          resource_type: "auto",
+          use_filename: true,
+        });
+        unlink(absFilePath);
+        await StoneModel.findByIdAndUpdate(stoneId, {
+          media: response.secure_url,
+          contentType: req.file.mimetype,
+        });
+      }
+      // CHECK MEDIA END //
 
       restOfTheTeam.map(async (member) => {
         const notification = await NotificationModel.create({
           receiver: member,
           notText:
             editedStone.kind === "stepstone"
-              ? `${userName} edited a stepstone in your ~${project.name}~ project`
+              ? `${userName} edited a stepstone in ${project.name}`
               : editedStone.kind === "milestone"
-              ? `${userName} edited a milestone in your ~${project.name}~ project`
-              : `${userName} edited the endstone of your ~${project.name}~ project`,
+              ? `${userName} edited a milestone in ${project.name}`
+              : `${userName} edited the endstone of ${project.name}`,
         });
         await UserModel.findByIdAndUpdate(member, {
           $push: { notifications: notification._id },
@@ -184,7 +198,7 @@ export async function updateStone(req, res, next) {
       });
     }
   } catch (error) {
-    next()
+    next();
   }
 }
 
@@ -205,12 +219,14 @@ export async function deleteStone(req, res, next) {
       error.statusCode = 401;
       throw error;
     } else {
-      const stoneToBeDeleted = await StoneModel.findById(req.params.id);
-      const deleteStone = await StoneModel.findByIdAndDelete(req.params.id);
+      const stoneToBeDeleted = await StoneModel.findById(req.params.stoneId);
+      const deleteStone = await StoneModel.findByIdAndDelete(
+        req.params.stoneId
+      );
       // Delete  the reference from the project
       await ProjectModel.updateOne({
         $pull: {
-          stones: req.params.id,
+          stones: req.params.stoneId,
         },
       });
       restOfTheTeam.map(async (member) => {
@@ -218,10 +234,10 @@ export async function deleteStone(req, res, next) {
           receiver: member,
           notText:
             stoneToBeDeleted.kind === "stepstone"
-              ? `${userName} deleted a stepstone in your ~${project.name}~ project`
+              ? `${userName} deleted a stepstone in ${project.name}`
               : stoneToBeDeleted.kind === "milestone"
-              ? `${userName} deleted a milestone in your ~${project.name}~ project`
-              : `${userName} deleted the endstone of your ~${project.name}~ project`,
+              ? `${userName} deleted a milestone in ${project.name}`
+              : `${userName} deleted the endstone of ${project.name}`,
         });
         await UserModel.findByIdAndUpdate(member, {
           $push: { notifications: notification._id },

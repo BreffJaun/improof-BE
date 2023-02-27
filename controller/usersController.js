@@ -1,19 +1,27 @@
 // I M P O R T:  E X T E R N A L  D E P E N D E N C I E S
-import * as dotenv from "dotenv"; dotenv.config();
+import * as dotenv from "dotenv";
+dotenv.config();
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import sgMail from "@sendgrid/mail";
+import * as url from "url";
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
+import { v2 as cloudinary } from "cloudinary";
+import { unlink } from "fs/promises";
 
 // I M P O R T:  F U N C T I O N S
 import UserModel from "../models/userModel.js";
 import NotificationModel from "../models/notificationModel.js";
-import ProjectModel from "../models/projectModel.js"
+import ProjectModel from "../models/projectModel.js";
 import MessageModel from "../models/messageModel.js";
 
 // I M P O R T  &  D E C L A R E   B C R Y P T   K E Y
 const JWT_KEY = process.env.SECRET_JWT_KEY || "DefaultValue";
 const SENDGRID_KEY = process.env.SENDGRID_API_KEY;
 const SENDGRID_EMAIL = process.env.SENDGRID_EMAIL;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const BE_HOST = process.env.BE_HOST;
 const FE_HOST = process.env.FE_HOST;
 
@@ -22,7 +30,7 @@ const FE_HOST = process.env.FE_HOST;
 //  L E G E N D
 //  (N) = CONTROLLER WITH A NOTIFICATION
 
-// ALL USERS (GET) 
+// ALL USERS (GET)
 export async function getUsers(req, res, next) {
   try {
     res.json(await UserModel.find());
@@ -42,37 +50,52 @@ export async function addUser(req, res, next) {
       newUser.profile.firstName[0].toUpperCase() +
       newUser.profile.lastName[0].toUpperCase();
     let createdUser;
+
     if (newUser.profile.isTalent) {
       // newUser.meta = ["c-DB2","bg-gDB"]
-      createdUser = await UserModel.create({...newUser,
-        profile: {...newUser.profile, password: hashedPassword, isTalent: true, initials: initials},
-        meta:{colorTheme: ["c-DB2","bg-gDB"]}
+      createdUser = await UserModel.create({
+        ...newUser,
+        profile: {
+          ...newUser.profile,
+          password: hashedPassword,
+          isTalent: true,
+          initials: initials,
+        },
+        meta: { colorTheme: ["c-DB2", "bg-gDB"] },
       });
-      newCreatedUser = createdUser
-      const userId = newCreatedUser._id
-      // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
-    const newNotification = await NotificationModel.create({
-      receiver: userId,
-      notText: `Fill out your profile to be found better by recruiters or other talents!`
-    });
-    const updatedUser = await UserModel.findByIdAndUpdate(userId, {$push: {notifications: newNotification._id}});
-    
-    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
-
+      newCreatedUser = createdUser;
+      const userId = newCreatedUser._id;
+      // CREATE NOTIFICATION FOR TO INFORM THE USER START //
+      const newNotification = await NotificationModel.create({
+        receiver: userId,
+        notText: `Fill out your profile and get easily discovered by recruiters and other talents!`,
+      });
+      const updatedUser = await UserModel.findByIdAndUpdate(userId, {
+        $push: { notifications: newNotification._id },
+      });
+      // CREATE NOTIFICATION FOR TO INFORM THE USER END //
     }
     if (newUser.profile.isRecruiter) {
-      createdUser = await UserModel.create({...newUser,
-        profile: {...newUser.profile, password: hashedPassword, isRecruiter: true, initials: initials},
+      createdUser = await UserModel.create({
+        ...newUser,
+        profile: {
+          ...newUser.profile,
+          password: hashedPassword,
+          isRecruiter: true,
+          initials: initials,
+        },
       });
-      newCreatedUser = createdUser
-      const userId = newCreatedUser._id
-      // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
-    const newNotification = await NotificationModel.create({
-      receiver: userId,
-      notText: `Fill out your profile to give Talents a better impression of you!`
-    });
-    const updatedUser = await UserModel.findByIdAndUpdate(userId, {$push: {notifications: newNotification._id}});
-    // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
+      newCreatedUser = createdUser;
+      const userId = newCreatedUser._id;
+      // CREATE NOTIFICATION FOR TO INFORM THE USER START //
+      const newNotification = await NotificationModel.create({
+        receiver: userId,
+        notText: `Fill out your profile to give Talents a better impression!`,
+      });
+      const updatedUser = await UserModel.findByIdAndUpdate(userId, {
+        $push: { notifications: newNotification._id },
+      });
+      // CREATE NOTIFICATION FOR TO INFORM THE USER END //
     }
 
     // VERIFY EMAIL IMPLEMENT BEGIN //
@@ -95,10 +118,10 @@ export async function addUser(req, res, next) {
       <p>Hi ${newUser.profile.firstName}, </p>
 
       <p>We're happy you signed up for 'improof'. To start your journey and explore
-      your projects, please verify your email.</p>
+      new projects, please verify your email.</p>
 
       <p style="background-color: orange; border-radius: 7px; width: 80px; height: 20px; text-decoration: none;">
-      <a href="${BE_HOST}/users/verify/${verifyToken}">
+      <a href="https://improof-be.onrender.com/users/verify/${verifyToken}">
       Verify now</a></p>      
     
       <p>Welcome to improof!<br>
@@ -111,7 +134,7 @@ export async function addUser(req, res, next) {
 
     res.status(201).json({
       message:
-        "Please verify your account via the link in the email we send you, to use your Profile.",
+        "Please verify your account via the link in your email, to use your Profile.",
       status: true,
       data: "",
     });
@@ -130,13 +153,14 @@ export async function verifyEmail(req, res, next) {
     const updatedUser = await UserModel.findByIdAndUpdate(id, {
       meta: { ...user.meta, isVerified: true },
     });
+    console.log();
     // res.status(200).json({
     //   message: "E-Mail is now SUCCESSFULLY verified!",
     //   status: true,
     //   data: "",
     //   user: updatedUser,
     // });
-    res.redirect(`${FE_HOST}/login`);
+    res.redirect(`https://improof-fe.vercel.app`);
     // if we have a frontend, we can direct the successful verification to the login page
   } catch (err) {
     next(err);
@@ -156,7 +180,7 @@ export async function login(req, res, next) {
     let updatedUser;
     if (!isVerified) {
       const err = new Error(
-        "User is not verified yet, please verify yourself using the link in your email. If the link is older than an hour, please request a new one."
+        "User is not verified, please get verified by using the link in your email. If the link is expired please request a new one."
       );
       err.statusCode = 401;
       throw err;
@@ -224,36 +248,44 @@ export async function checkLogin(req, res, next) {
   try {
     const token = req.cookies.loginCookie;
     const tokenDecoded = jwt.verify(token, JWT_KEY);
-    const user = await UserModel.findById(tokenDecoded.userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]).populate([
-    {
-      path: "myProjects",
-      populate: {
-        path:"team",       
-        model: UserModel      
-      }
-    },
-    {
-      path: "starProjects",
-      populate: {
-        path:"team",       
-        model: UserModel      
-      }
-    },
-    {
-      path: "conversations",
-      populate: {
-        path:"message",       
-        model: MessageModel      
-      }
-    },
-    {
-      path: "conversations",
-      populate: {
-        path:"participants",       
-        model: UserModel 
-      }
-    }
-  ]);
+    const user = await UserModel.findById(tokenDecoded.userId)
+      .populate([
+        "starProjects",
+        "myProjects",
+        "notifications",
+        "conversations",
+        "follows",
+      ])
+      .populate([
+        {
+          path: "myProjects",
+          populate: {
+            path: "team",
+            model: UserModel,
+          },
+        },
+        {
+          path: "starProjects",
+          populate: {
+            path: "team",
+            model: UserModel,
+          },
+        },
+        {
+          path: "conversations",
+          populate: {
+            path: "message",
+            model: MessageModel,
+          },
+        },
+        {
+          path: "conversations",
+          populate: {
+            path: "participants",
+            model: UserModel,
+          },
+        },
+      ]);
 
     console.log("Token in Cookie is valid. User is loggedin");
     res
@@ -306,7 +338,7 @@ export async function forgotPassword(req, res, next) {
     const msg = {
       to: userFromDb.profile.email, // Change to your recipient
       from: SENDGRID_EMAIL, // Change to your verified sender
-      subject: "SET A NEW PASSWORD for your 'improof' Account",
+      subject: "SET A NEW PASSWORD for your 'improof' account",
       // text: `To change your password, please click on this link: ${BE_HOST}/users/setnewpassword/${verifyToken}`,
       html: `
       <div>
@@ -330,7 +362,7 @@ export async function forgotPassword(req, res, next) {
     const response = await sgMail.send(msg);
     // VERIFY EMAIL IMPLEMENT END //
     res.status(201).json({
-      message: "You got send an Email to set your new password.",
+      message: "We send you an Email to change your password.",
       status: true,
       data: "",
     });
@@ -410,37 +442,45 @@ export async function getUser(req, res, next) {
       err.statusCode = 422;
       throw err;
     }
-    const user = await UserModel.findById(req.params.id).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]).populate([{
-      path: "myProjects",
-      populate: {
-        path:"team",       
-        model: UserModel      
-      }
-    },
-    {
-      path: "starProjects",
-      populate: {
-        path:"team",       
-        model: UserModel      
-      }
-    },
-    {
-      path: "conversations",
-      populate: {
-        path:"participants",       
-        model: UserModel      
-      }
-    },
-    {
-      path:"conversations",
-      populate: {
-        path:"message",
-        model: MessageModel
-      }
-    }
+    const user = await UserModel.findById(req.params.id)
+      .populate([
+        "starProjects",
+        "myProjects",
+        "notifications",
+        "conversations",
+        "follows",
+      ])
+      .populate([
+        {
+          path: "myProjects",
+          populate: {
+            path: "team",
+            model: UserModel,
+          },
+        },
+        {
+          path: "starProjects",
+          populate: {
+            path: "team",
+            model: UserModel,
+          },
+        },
+        {
+          path: "conversations",
+          populate: {
+            path: "participants",
+            model: UserModel,
+          },
+        },
+        {
+          path: "conversations",
+          populate: {
+            path: "message",
+            model: MessageModel,
+          },
+        },
+      ]);
 
-  ]);
-  
     res.status(200).json({
       userData: user,
       message: "Search was SUCCESSFULL!",
@@ -460,8 +500,6 @@ export async function updateUser(req, res, next) {
     const id = req.params.id;
     let oldUserData = await UserModel.findById(id);
     // DEFINE NEEDED VARIABLES //
-    // console.log('req.body: ', JSON.parse(req.body.data));
-    // console.log('req.file: ', req.file);
 
     // IMPORTANT: A additionally check (after auth) if the given id is the same id as in the token. We do that, because we want that the user could only change his own profile.
     // CHECK IF AUTHORIZED START //
@@ -542,30 +580,21 @@ export async function updateUser(req, res, next) {
     // CHECK PASSWORD END //
 
     // CHECK AVATAR BEGIN //
-    // MULTER VERSION
-    // if (req.file) {
-    //   const user = await UserModel.findByIdAndUpdate(
-    //     id,
-    //     {
-    //       profile: {
-    //         ...oldUserData.profile,
-    //         avatar: `${BE_HOST}/${req.file.path}`,
-    //       },
-    //     },
-    //     { new: true }
-    //   );
-    //   oldUserData = user;
-    // }
-
-    // GRIDFS VERSION
     if (req.file) {
+      cloudinary.config({
+        cloud_name: CLOUDINARY_CLOUD_NAME,
+        api_key: CLOUDINARY_API_KEY,
+        api_secret: CLOUDINARY_API_SECRET,
+      });
+      const absFilePath = __dirname + "../" + req.file.path;
+      const response = await cloudinary.uploader.upload(absFilePath, {
+        use_filename: true,
+      });
+      unlink(absFilePath);
       const user = await UserModel.findByIdAndUpdate(
         id,
         {
-          profile: {
-            ...oldUserData.profile,
-            avatar: `${BE_HOST}/media/${req.file.id}`,
-          },
+          "profile.avatar": response.secure_url,
         },
         { new: true }
       );
@@ -609,7 +638,7 @@ export async function updateUser(req, res, next) {
     }
     // CHECK POSITION END //
 
-    // CHECK FOR CATEGORY START //    
+    // CHECK FOR CATEGORY START //
     if (userData.profile.category) {
       const category = userData.profile.category;
       const user = await UserModel.findByIdAndUpdate(
@@ -617,7 +646,7 @@ export async function updateUser(req, res, next) {
         { profile: { ...oldUserData.profile, category: category } },
         { new: true }
       );
-      oldUserData = user;    
+      oldUserData = user;
     }
     // CHECK FOR CATEGORY END //
 
@@ -773,7 +802,7 @@ export async function updateUser(req, res, next) {
     // CHECK COLORTHEME END //
     // ** UPDATE META END ** //
     // ## CHECK & UPDATE EVERY GIVEN PARAMETER END ## //
-    const updatedUser = await UserModel.findById(id)
+    const updatedUser = await UserModel.findById(id);
     // .populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
     res.status(200).json({
       userData: updatedUser,
@@ -807,8 +836,11 @@ export async function followUser(req, res, next) {
 
     // ADD FOLLOWED USER START //
     if (!user.follows.includes(follUserId)) {
-      const user = await UserModel.findByIdAndUpdate(userId, 
-        {$push: {follows: follUserId}}, { new: true });
+      const user = await UserModel.findByIdAndUpdate(
+        userId,
+        { $push: { follows: follUserId } },
+        { new: true }
+      );
     } else {
       const err = new Error("You already follow this talent!");
       err.statusCode = 401;
@@ -819,12 +851,20 @@ export async function followUser(req, res, next) {
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER START //
     const newNotification = await NotificationModel.create({
       receiver: follUserId,
-      notText: `${userName} follows you from now on!`
+      notText: `${userName} follows you from now on!`,
     });
-    const updatedFollowUser = await UserModel.findByIdAndUpdate(follUserId, {$push: {notifications: newNotification._id}});
+    const updatedFollowUser = await UserModel.findByIdAndUpdate(follUserId, {
+      $push: { notifications: newNotification._id },
+    });
     // CREATE NOTIFICATION FOR TO INFORM THE FOLLOWED USER END //
 
-    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
+    const updatedUser = await UserModel.findById(userId).populate([
+      "starProjects",
+      "myProjects",
+      "notifications",
+      "conversations",
+      "follows",
+    ]);
 
     res.status(200).json({
       message: "Follow was SUCCESSFUL!",
@@ -856,8 +896,11 @@ export async function leadUser(req, res, next) {
 
     // LEAD FOLLOWED USER START //
     if (user.follows.includes(follUserId)) {
-      const user = await UserModel.findByIdAndUpdate(userId, 
-        {$pull: {follows: follUserId}}, { new: true });
+      const user = await UserModel.findByIdAndUpdate(
+        userId,
+        { $pull: { follows: follUserId } },
+        { new: true }
+      );
     } else {
       const err = new Error("You don't follow this talent!");
       err.statusCode = 401;
@@ -865,7 +908,13 @@ export async function leadUser(req, res, next) {
     }
     // LEAD FOLLOWED USER END //
 
-    const updatedUser = await UserModel.findById(userId).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"])
+    const updatedUser = await UserModel.findById(userId).populate([
+      "starProjects",
+      "myProjects",
+      "notifications",
+      "conversations",
+      "follows",
+    ]);
 
     res.status(200).json({
       message: "Lead was SUCCESSFUL!",
@@ -891,7 +940,15 @@ export async function deleteUser(req, res, next) {
       err.statusCode = 401;
       throw err;
     }
-    const deletedUser = await UserModel.findByIdAndDelete(req.params.id).populate(["starProjects", "myProjects", "notifications", "conversations", "follows"]);
+    const deletedUser = await UserModel.findByIdAndDelete(
+      req.params.id
+    ).populate([
+      "starProjects",
+      "myProjects",
+      "notifications",
+      "conversations",
+      "follows",
+    ]);
     res.status(200).json({
       userData: deletedUser,
       message: "Delete was SUCCESSFUL!",
