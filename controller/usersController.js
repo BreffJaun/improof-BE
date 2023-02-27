@@ -323,7 +323,7 @@ export async function forgotPassword(req, res, next) {
       us immediately at ${SENDGRID_EMAIL}</p>
 
       <p>Thank you,<br>
-      your Coffy Paste Team </p>
+      your improof team </p>
       
       <div>`,
     };
@@ -900,5 +900,20 @@ export async function deleteUser(req, res, next) {
     });
   } catch (err) {
     next(err);
+  }
+}
+
+export async function setFirstLogin(req, res, next) {
+  try {
+    console.log(userId);
+    const userId = req.params.userId
+    await UserModel.findByIdAndUpdate(userId, {
+      meta:{
+      firstLogin:false, loginCount:2
+      }
+    })
+    res.json({message:"alles ok!"})
+  } catch (error) {
+    next(error)
   }
 }

@@ -28,6 +28,7 @@ import {
   followUser,
   leadUser,
   setNewPassword,
+  setFirstLogin
 } from "../controller/usersController.js";
 import { setMode } from "../controller/darkmodeController.js";
 
@@ -63,6 +64,8 @@ userRouter.route("/follow/add").patch(auth, followUser);
 userRouter.route("/follow/delete").delete(auth, leadUser);
 
 userRouter.route("/darkmode").patch(setMode);
+
+userRouter.route("/firstlogin/:userId").patch(setFirstLogin);
 
 userRouter
   .route("/:id")
