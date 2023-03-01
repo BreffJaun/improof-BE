@@ -1,53 +1,53 @@
-# **Backend-Template**
+# Improof 
 
-This is a simple template for a backend with express.js and connection to mongoDB.
+![logo](./public/assets/images/improof_A100.png)
 
-# Used Dependencies in this template
-- dotenv
-- mongoose
-- express
-- cors
-- morgan
-- faker (to feed database with fake data to test with)
-- jasonwebtoken (jwt => to create tokens)
-- bcrypt (for hashing passwords)
-- cookieParser (to create cookies)
-- multer (for uploading files)
-- sgMail (to implement automatic sending emails)
+Eine ausführliche Beschreibung des Projekts findest du in unserem [Frontend-Repository](https://github.com/BreffJaun/improof-FE).
 
-# Folder structure:
-- controller
-- middleware
-- models
-- routes
-- seeding
+**Improof** schließt die Lücke zwischen „Social Media“ und „professional Network“. Das Ziel ist es vor allem Quereinsteigern den Einstieg in die Berufswelt leichter machen. Auch Recruitern soll die Arbeit mit Berufsfeldern die stark von Quereinsteigern geprägt sind, die Suche nach Kandidaten mit passenden Fähigkeiten erleichtern.
 
-# to start
-create .env file with 4 Variables after this schema: 
+## Installation
 
-DB_USER=          Your Mongodb Username     
-DB_PASS=          Your MongdoDB Password    
-DB_HOST=          Your MongoDB Host     
-DB_NAME=          Your MongoDb DataBase Name    
-PORT=             Port for your Localhost   
-SECRET_JWT_KEY=   Set your own key to encrypt your webtoken with    
-SENDGRID_API_KEY= If you use sendGrid, place here your automatically created key which you get from the sendGrid website.   
-    
-You can copy the following empty scheme and paste it in your .env file to fill it out:
+Um **Improof** zu clonen und zu starten, sollten [Git](https://git-scm.com) und [Node.js](https://nodejs.org/en/download/) auf dem Rechner installiert sein. Desweiteren muss entweder [MongoDB](https://www.mongodb.com/) auf dem Rechner installiert sein, oder es wird ein Link zu einer MongoDB-Datenbank (wie z.B. [MongoDB Atlas](https://www.mongodb.com/cloud/atlas2)) benötigt. 
 
-DB_USER=        
-DB_PASS=        
-DB_HOST=        
-DB_NAME=        
-PORT=       
-SECRET_JWT_KEY=     
-SENDGRID_API_KEY=       
+### Backend
 
+Aus der Kommandozeile:
 
-If you use a "!" or a "?" in your password, it could be required to change it with the following combinations:
-! === %21
-? === %40
+```bash
+# Clone das Backend-Repository (hier mittels SSH Key) 
+$ git clone git@github.com:BreffJaun/improof-BE.git
 
-Type in terminal
-1.  npm i 
-2.  npm start
+# Gehe in das Verzeichnis
+cd  improof-BE
+
+# Installiere Dependencies
+$ npm install
+```
+
+Du musst nun eine `.env` Datei im Root-Verzeichnes anlegen. Darin sollen folgende Umgebungsvariablen angegeben werden:
+
+DB_USER=          Dein MongoDB Benutzername   
+DB_PASS=           Dein MongoDB Passwort    
+DB_HOST=          Dein MongoDB Host     
+DB_NAME=         Dein MongoDb Datenbank Name    
+PORT=                  Port auf dem dein Localhost läuft
+SECRET_JWT_KEY=   Legen deinen eigenen Schlüssel fest, mit dem du deinen Webtoken verschlüsselst   
+SENDGRID_API_KEY= Füge hier deinen Sendgrid API-Key ein, welchen du auf der Sendgrid Seite erhältst  
+
+CLOUDINARY_CLOUD_NAME= 
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+Wir haben bei diesem Projekt mit Cloudinary gearbeitet um Mediadateien in einer Cloud abspeichern zu können. Wenn du einen anderen Cloud Anbieter benutzen möchtest, kann es sein, dass diverse Stellen im Backend dafür angepasst werden müssen. Wir raten daher zu einem Cloudinary Account. 
+
+BE_HOST = Trage hier den kompletten HOST ein, auf dem dein Backend läuft (Bsp.: "http://localhost:2404")
+
+FE_HOST = Trage hier den kompletten HOST ein, auf dem dein Frontend läuft (Bsp.: "http://localhost:5173")
+
+Wenn du die env. Datei angelegt und mit allen Information versehen hast, starte das den Server.
+
+```bash
+# Starte das Backend
+$ nodemon server.js
+```
