@@ -79,7 +79,7 @@ export async function addStone(req, res, next) {
     const newStoneId = newStone._id;
 
     // CHECK MEDIA START //
-    if (req.file) {
+    if (req.file && req.file.mimetype.includes("png" || "jpg" || "jpeg" || "tiff" || "gif" || "bmp" || "mp4" || "mov" || "wmv" || "avi" || "mkv" || "flv")) {
       cloudinary.config({
         cloud_name: CLOUDINARY_CLOUD_NAME,
         api_key: CLOUDINARY_API_KEY,
@@ -157,7 +157,7 @@ export async function updateStone(req, res, next) {
       );
 
       // CHECK MEDIA START //
-      if (req.file) {
+      if (req.file && req.file.mimetype.includes("png" || "jpg" || "jpeg" || "tiff" || "gif" || "bmp" || "mp4" || "mov" || "wmv" || "avi" || "mkv" || "flv")) {
         console.log("req.file: ", req.file);
         cloudinary.config({
           cloud_name: CLOUDINARY_CLOUD_NAME,

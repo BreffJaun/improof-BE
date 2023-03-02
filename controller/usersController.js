@@ -581,7 +581,9 @@ export async function updateUser(req, res, next) {
     // CHECK PASSWORD END //
 
     // CHECK AVATAR BEGIN //
-    if (req.file) {
+    if (req.file && req.file.mimetype.includes("png" || "jpg" || "jpeg" || "tiff" || "gif" || "bmp")) {
+      // console.log("req.file: ", req.file);
+      // console.log("TRUE TRUE TRUE");
       cloudinary.config({
         cloud_name: CLOUDINARY_CLOUD_NAME,
         api_key: CLOUDINARY_API_KEY,
@@ -961,6 +963,7 @@ export async function deleteUser(req, res, next) {
   }
 }
 
+// SET FIRST LOGIN
 export async function setFirstLogin(req, res, next) {
   try {
     const userId = req.params.userId
