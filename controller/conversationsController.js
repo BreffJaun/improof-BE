@@ -78,8 +78,8 @@ export async function addConversation(req, res, next) {
       // await ConversationModel.findByIdAndUpdate(conversationExists._id, {
       //   $push: { message: message._id },
       // });
-      console.log("if", conversationExists._id);
-      console.log(conversationExists);
+      // console.log("if", conversationExists._id);
+      // console.log(conversationExists);
       return res.status(201).send({
         message: "existed conversation continued",
         status: true,

@@ -32,7 +32,7 @@ export async function messagesGetAll(req, res, next) {
     );
     const notReadMessages = notReadMessages2.map((msg) => msg._id.toString());
 
-    console.log(receivedMessages);
+    // console.log(receivedMessages);
     let receivedAndNotRead = receivedMessages.filter((x) =>
       notReadMessages.includes(x)
     );
@@ -45,9 +45,9 @@ export async function messagesGetAll(req, res, next) {
         })
     );
 
-    console.log("received:", receivedMessages2);
-    console.log("not read:", notReadMessages);
-    console.log("received and not read:", receivedAndNotRead);
+    // console.log("received:", receivedMessages2);
+    // console.log("not read:", notReadMessages);
+    // console.log("received and not read:", receivedAndNotRead);
 
     const allMessages = conversation.message;
     res.json({
@@ -143,7 +143,7 @@ export async function deleteMessage(req, res, next) {
           $pull: { conversations: conversationId },
         });
       }
-      console.log("message length" + conversation.message.length);
+      // console.log("message length" + conversation.message.length);
       res.status(201).send({
         message: "message deleted successfully ",
         status: true,

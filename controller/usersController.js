@@ -154,7 +154,6 @@ export async function verifyEmail(req, res, next) {
     const updatedUser = await UserModel.findByIdAndUpdate(id, {
       meta: { ...user.meta, isVerified: true },
     });
-    console.log();
     // res.status(200).json({
     //   message: "E-Mail is now SUCCESSFULLY verified!",
     //   status: true,
@@ -968,7 +967,7 @@ export async function setFirstLogin(req, res, next) {
   try {
     const userId = req.params.userId
     const user = await UserModel.findById(userId)
-    console.log(userId);
+    // console.log(userId);
     await UserModel.findByIdAndUpdate(userId, {
       meta:{
         ...user.meta,

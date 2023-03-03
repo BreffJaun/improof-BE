@@ -59,10 +59,10 @@ export async function addStone(req, res, next) {
   try {
     const newStoneData = JSON.parse(req.body.data);
     const projectId = newStoneData.projectId;
-    console.log("projectId: ", projectId);
+    // console.log("projectId: ", projectId);
     const project = await ProjectModel.findById(projectId);
     const userId = newStoneData.userId;
-    console.log("userId: ", userId);
+    // console.log("userId: ", userId);
     const user = await UserModel.findById(userId);
     const userName = user.profile.firstName + " " + user.profile.lastName;
     const team = project.team; // Project Team for notification push
@@ -85,7 +85,7 @@ export async function addStone(req, res, next) {
         api_key: CLOUDINARY_API_KEY,
         api_secret: CLOUDINARY_API_SECRET,
       });
-      console.log("req.file: ", req.file);
+      // console.log("req.file: ", req.file);
       const absFilePath = __dirname + "../" + req.file.path;
       const response = await cloudinary.uploader.upload(absFilePath, {
         resource_type: "auto",
@@ -132,7 +132,7 @@ export async function addStone(req, res, next) {
 export async function updateStone(req, res, next) {
   try {
     const newStoneData = JSON.parse(req.body.data);
-    console.log("newStoneData: ", newStoneData);
+    // console.log("newStoneData: ", newStoneData);
     const projectId = newStoneData.projectId;
     const stoneId = newStoneData.stoneId;
     const userId = newStoneData.userId;
@@ -158,7 +158,7 @@ export async function updateStone(req, res, next) {
 
       // CHECK MEDIA START //
       if (req.file && req.file.mimetype.includes("png" || "jpg" || "jpeg" || "tiff" || "gif" || "bmp" || "mp4" || "mov" || "wmv" || "avi" || "mkv" || "flv")) {
-        console.log("req.file: ", req.file);
+        // console.log("req.file: ", req.file);
         cloudinary.config({
           cloud_name: CLOUDINARY_CLOUD_NAME,
           api_key: CLOUDINARY_API_KEY,

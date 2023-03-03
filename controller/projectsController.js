@@ -416,9 +416,9 @@ export async function updateProject(req, res, next) {
         (member) => !newTeam.includes(member)
       );
 
-      console.log("oldTeam: ", oldTeam);
-      console.log("newTeam: ", newTeam);
-      console.log("deletedMembers: ", deletedMembers);
+      // console.log("oldTeam: ", oldTeam);
+      // console.log("newTeam: ", newTeam);
+      // console.log("deletedMembers: ", deletedMembers);
 
       // ADD PROJECT IN NEW MEMBERS & CREATE NOTIFICATION START //
       if (checkNewMembers.length > 0) {
@@ -466,7 +466,7 @@ export async function updateProject(req, res, next) {
         { new: true }
       );
       oldProjectData = project;
-      console.log("project: ", project);
+      // console.log("project: ", project);
     }
     // CHECK TEAM END //
 
