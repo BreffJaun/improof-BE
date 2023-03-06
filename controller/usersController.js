@@ -580,27 +580,28 @@ export async function updateUser(req, res, next) {
     // CHECK PASSWORD END //
 
     // CHECK AVATAR BEGIN //
-    if (req.file && req.file.mimetype.includes("png" || "jpg" || "jpeg" || "tiff" || "gif" || "bmp")) {
-      // console.log("req.file: ", req.file);
-      // console.log("TRUE TRUE TRUE");
-      cloudinary.config({
-        cloud_name: CLOUDINARY_CLOUD_NAME,
-        api_key: CLOUDINARY_API_KEY,
-        api_secret: CLOUDINARY_API_SECRET,
-      });
-      const absFilePath = __dirname + "../" + req.file.path;
-      const response = await cloudinary.uploader.upload(absFilePath, {
-        use_filename: true,
-      });
-      unlink(absFilePath);
-      const user = await UserModel.findByIdAndUpdate(
-        id,
-        {
-          "profile.avatar": response.secure_url,
-        },
-        { new: true }
-      );
-      oldUserData = user;
+    if (req.file) {
+      const allowedMimetypes = ["png", "jpg", "jpeg", "tiff", "gif", "bmp"];
+      if (allowedMimetypes.some(el => req.file.mimetype.includes(el))) {
+        cloudinary.config({
+          cloud_name: CLOUDINARY_CLOUD_NAME,
+          api_key: CLOUDINARY_API_KEY,
+          api_secret: CLOUDINARY_API_SECRET,
+        });
+        const absFilePath = __dirname + "../" + req.file.path;
+        const response = await cloudinary.uploader.upload(absFilePath, {
+          use_filename: true,
+        });
+        unlink(absFilePath);
+        const user = await UserModel.findByIdAndUpdate(
+          id,
+          {
+            "profile.avatar": response.secure_url,
+          },
+          { new: true }
+        );
+        oldUserData = user;
+      }
     }
     // CHECK AVATAR END //
 

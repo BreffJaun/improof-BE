@@ -57,20 +57,23 @@ export async function addProject(req, res, next) {
     const projectId = newProject._id;
 
     // THUMBNAIL IMPLEMENT BEGIN //
-    if (req.file && req.file.mimetype.includes("png" || "jpg" || "jpeg" || "tiff" || "gif" || "bmp")) {
-      cloudinary.config({
-        cloud_name: CLOUDINARY_CLOUD_NAME,
-        api_key: CLOUDINARY_API_KEY,
-        api_secret: CLOUDINARY_API_SECRET,
-      });
-      const absFilePath = __dirname + "../" + req.file.path;
-      const response = await cloudinary.uploader.upload(absFilePath, {
-        use_filename: true,
-      });
-      unlink(absFilePath);
-      await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail: response.secure_url,
-      });
+    if (req.file) {
+      const allowedMimetypes = ["png", "jpg", "jpeg", "tiff", "gif", "bmp"];
+      if (allowedMimetypes.some(el => req.file.mimetype.includes(el))) { 
+        cloudinary.config({
+          cloud_name: CLOUDINARY_CLOUD_NAME,
+          api_key: CLOUDINARY_API_KEY,
+          api_secret: CLOUDINARY_API_SECRET,
+        });
+        const absFilePath = __dirname + "../" + req.file.path;
+        const response = await cloudinary.uploader.upload(absFilePath, {
+          use_filename: true,
+        });
+        unlink(absFilePath);
+        await ProjectModel.findByIdAndUpdate(projectId, {
+          thumbnail: response.secure_url,
+        });
+      }
     } 
     // THUMBNAIL IMPLEMENT END //
 
@@ -356,21 +359,26 @@ export async function updateProject(req, res, next) {
     // CHECK DESCRIPTION END //
 
     // CHECK THUMBNAIL START //
-    if (req.file && req.file.mimetype.includes("png" || "jpg" || "jpeg" || "tiff" || "gif" || "bmp")) {
-      cloudinary.config({
-        cloud_name: CLOUDINARY_CLOUD_NAME,
-        api_key: CLOUDINARY_API_KEY,
-        api_secret: CLOUDINARY_API_SECRET,
-      });
-      const absFilePath = __dirname + "../" + req.file.path;
-      const response = await cloudinary.uploader.upload(absFilePath, {
-        use_filename: true,
-      });
-      unlink(absFilePath);
-      const project = await ProjectModel.findByIdAndUpdate(projectId, {
-        thumbnail: response.secure_url,
-      });
-      oldProjectData = project;
+    if (req.file) {
+      const allowedMimetypes = ["png", "jpg", "jpeg", "tiff", "gif", "bmp"];
+      // console.log(req.file);
+      // console.log(fileMimetype);
+      if (allowedMimetypes.some(el => req.file.mimetype.includes(el))) {
+        cloudinary.config({
+          cloud_name: CLOUDINARY_CLOUD_NAME,
+          api_key: CLOUDINARY_API_KEY,
+          api_secret: CLOUDINARY_API_SECRET,
+        });
+        const absFilePath = __dirname + "../" + req.file.path;
+        const response = await cloudinary.uploader.upload(absFilePath, {
+          use_filename: true,
+        });
+        unlink(absFilePath);
+        const project = await ProjectModel.findByIdAndUpdate(projectId, {
+          thumbnail: response.secure_url,
+        });
+        oldProjectData = project;        
+      }
     }
     // CHECK THUMBNAIL END //
 

@@ -79,23 +79,27 @@ export async function addStone(req, res, next) {
     const newStoneId = newStone._id;
 
     // CHECK MEDIA START //
-    if (req.file && req.file.mimetype.includes("png" || "jpg" || "jpeg" || "tiff" || "gif" || "bmp" || "mp4" || "mov" || "wmv" || "avi" || "mkv" || "flv")) {
-      cloudinary.config({
-        cloud_name: CLOUDINARY_CLOUD_NAME,
-        api_key: CLOUDINARY_API_KEY,
-        api_secret: CLOUDINARY_API_SECRET,
-      });
-      // console.log("req.file: ", req.file);
-      const absFilePath = __dirname + "../" + req.file.path;
-      const response = await cloudinary.uploader.upload(absFilePath, {
-        resource_type: "auto",
-        use_filename: true,
-      });
-      unlink(absFilePath);
-      await StoneModel.findByIdAndUpdate(newStoneId, {
-        media: response.secure_url,
-        contentType: req.file.mimetype,
-      });
+    if (req.file) {
+      // console.log(req.file);
+      const allowedMimetypes = ["png", "jpg", "jpeg", "tiff", "gif", "bmp", "mp4", "mov", "wmv", "avi", "mkv", "flv", "octet-stream"];
+      if (allowedMimetypes.some(el => req.file.mimetype.includes(el))) { 
+        cloudinary.config({
+          cloud_name: CLOUDINARY_CLOUD_NAME,
+          api_key: CLOUDINARY_API_KEY,
+          api_secret: CLOUDINARY_API_SECRET,
+        });
+        // console.log("req.file: ", req.file);
+        const absFilePath = __dirname + "../" + req.file.path;
+        const response = await cloudinary.uploader.upload(absFilePath, {
+          resource_type: "auto",
+          use_filename: true,
+        });
+        unlink(absFilePath);
+        await StoneModel.findByIdAndUpdate(newStoneId, {
+          media: response.secure_url,
+          contentType: req.file.mimetype,
+        });
+      }
     }
     // CHECK MEDIA END //
 
@@ -157,23 +161,26 @@ export async function updateStone(req, res, next) {
       );
 
       // CHECK MEDIA START //
-      if (req.file && req.file.mimetype.includes("png" || "jpg" || "jpeg" || "tiff" || "gif" || "bmp" || "mp4" || "mov" || "wmv" || "avi" || "mkv" || "flv")) {
-        // console.log("req.file: ", req.file);
-        cloudinary.config({
-          cloud_name: CLOUDINARY_CLOUD_NAME,
-          api_key: CLOUDINARY_API_KEY,
-          api_secret: CLOUDINARY_API_SECRET,
-        });
-        const absFilePath = __dirname + "../" + req.file.path;
-        const response = await cloudinary.uploader.upload(absFilePath, {
-          resource_type: "auto",
-          use_filename: true,
-        });
-        unlink(absFilePath);
-        await StoneModel.findByIdAndUpdate(stoneId, {
-          media: response.secure_url,
-          contentType: req.file.mimetype,
-        });
+      if (req.file) {
+        // console.log(req.file);
+        const allowedMimetypes = ["png", "jpg", "jpeg", "tiff", "gif", "bmp", "mp4", "mov", "wmv", "avi", "mkv", "flv", "octet-stream"];
+      if (allowedMimetypes.some(el => req.file.mimetype.includes(el))) { 
+          cloudinary.config({
+            cloud_name: CLOUDINARY_CLOUD_NAME,
+            api_key: CLOUDINARY_API_KEY,
+            api_secret: CLOUDINARY_API_SECRET,
+          });
+          const absFilePath = __dirname + "../" + req.file.path;
+          const response = await cloudinary.uploader.upload(absFilePath, {
+            resource_type: "auto",
+            use_filename: true,
+          });
+          unlink(absFilePath);
+          await StoneModel.findByIdAndUpdate(stoneId, {
+            media: response.secure_url,
+            contentType: req.file.mimetype,
+          });        
+        }
       }
       // CHECK MEDIA END //
 
